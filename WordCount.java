@@ -15,28 +15,22 @@ public final class WordCount {
 
     public static void main(String[] args) throws IOException {
         List stats = new ArrayList(args.length);
+        StringBuffer options = new StringBuffer();
 
         for (int i = 0; i < args.length; i = i + 1) {
-            File f = new File(args[i]);
-            if (f.isFile() && f.canRead()) {
-                WordCount wc = new WordCount(f);
-                wc.count();
-                stats.add((Object) wc);
+            if (args[i].startsWith("-")) {
+                options.append(args[i].substring(1));
+            } else {
+                File f = new File(args[i]);
+                if (f.isFile() && f.canRead()) {
+                    WordCount wc = new WordCount(f);
+                    wc.count();
+                    stats.add((Object) wc);
+                }
             }
         }
 
-        // Dummy object for total
-        WordCount total = new WordCount(new File("total"));
-        for (int i = 0; i < stats.size(); i = i + 1) {
-            WordCount wc = (WordCount) stats.get(i);
-            total.numLines = total.numLines + wc.numLines;
-            total.numWords = total.numWords + wc.numWords;
-            total.numChars = total.numChars + wc.numChars;
-        }
-        if (args.length > 1)
-            stats.add((Object) total);
-
-        WordCount.printStats(stats, WordCount.width(total.numChars));
+        System.exit(WordCount.printStats(stats, options.toString()));
     }
 
     public WordCount(File input) {
@@ -66,14 +60,51 @@ public final class WordCount {
         in.close();
     }
 
-    protected static void printStats(List stats, int width) {
+    protected static int printStats(List stats, String opts) {
+        boolean printNumLines = false;
+        boolean printNumWords = false;
+        boolean printNumChars = false;
+
+        if (opts.length() == 0)
+            opts = "clw";
+        for (int i = 0; i < opts.length(); i = i + 1) {
+            char c = opts.charAt(i);
+            if (c == 'l')
+                printNumLines = true;
+            else if (c == 'w')
+                printNumWords = true;
+            else if (c == 'c')
+                printNumChars = true;
+            else {
+                System.err.println("WordCount: invalid option -- " + c);
+                return 1;
+            }
+        }
+
+        // Dummy object for total
+        WordCount total = new WordCount(new File("total"));
         for (int i = 0; i < stats.size(); i = i + 1) {
             WordCount wc = (WordCount) stats.get(i);
-            System.out.println(WordCount.format(wc.numLines, width) + " " +
-                               WordCount.format(wc.numWords, width) + " " +
-                               WordCount.format(wc.numChars, width) + " " +
-                               wc.filename);
+            total.numLines = total.numLines + wc.numLines;
+            total.numWords = total.numWords + wc.numWords;
+            total.numChars = total.numChars + wc.numChars;
         }
+        if (stats.size() > 1)
+            stats.add((Object) total);
+
+        int width = WordCount.width(total.numChars);
+        for (int i = 0; i < stats.size(); i = i + 1) {
+            WordCount wc = (WordCount) stats.get(i);
+            if (printNumLines)
+                System.out.print(WordCount.format(wc.numLines, width) + " ");
+            if (printNumWords)
+                System.out.print(WordCount.format(wc.numWords, width) + " ");
+            if (printNumChars)
+                System.out.print(WordCount.format(wc.numChars, width) + " ");
+            System.out.println(wc.filename);
+        }
+
+        return 0;
     }
 
     protected static String format(int n, int width) {

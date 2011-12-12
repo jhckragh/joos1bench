@@ -37,14 +37,38 @@ public final class Translate {
             if (c == '-' && i < set.length() - 1) {
                 char from = set.charAt(i - 1);
                 char to = set.charAt(i + 1);
-                for (char d = (char) (from + 1); d <= to; d = (char) (d + 1))
+                for (char d = (char) (from + 1); d < to; d = (char) (d + 1))
                     expanded.append(d);
+            } else if (c == '\\') {
+                expanded.append(Translate.unescape(set.charAt(i + 1)));
+                i = i + 1;
             } else {
                 expanded.append(c);
             }
         }
 
         return expanded.toString();
+    }
+
+    // TODO Handle octal escapes \NNN
+    protected static char unescape(char c) {
+        if (c == '\\')
+            return '\\';
+        if (c == 'a')
+            return '\007';
+        if (c == 'b')
+            return '\b';
+        if (c == 'f')
+            return '\f';
+        if (c == 'n')
+            return '\n';
+        if (c == 'r')
+            return '\r';
+        if (c == 't')
+            return '\t';
+        if (c == 'v')
+            return '\013';
+        return c;
     }
 
     protected static int[] buildTable(String set1, String set2) {
@@ -97,6 +121,11 @@ public final class Translate {
                     Translate.err("range-endpoints of `" +
                                   from + "-" + to +"' are in " +
                                   "reverse collating sequence order");
+                    return false;
+                }
+            } else if (c == '\\' && i == set.length() - 1) {
+                if (i == 0 || (i > 0 && set.charAt(i - 1) != '\\')) {
+                    Translate.err("unescaped backslash at end of string");
                     return false;
                 }
             }

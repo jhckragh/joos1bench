@@ -39,6 +39,13 @@ public final class Translate {
                 char to = set.charAt(i + 1);
                 for (char d = (char) (from + 1); d < to; d = (char) (d + 1))
                     expanded.append(d);
+            } else if (c=='[' && i<set.length()-2 && set.charAt(i+1)==':') {
+                int end = set.indexOf(":]", i);
+                if (end != -1) {
+                    String charClass = set.substring(i + 2, end);
+                    expanded.append(Translate.expandCharacterClass(charClass));
+                    i = end + 1;
+                }
             } else if (c == '\\') {
                 expanded.append(Translate.unescape(set.charAt(i + 1)));
                 i = i + 1;
@@ -48,6 +55,51 @@ public final class Translate {
         }
 
         return expanded.toString();
+    }
+
+    protected static String expandCharacterClass(String className) {
+        String upper  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lower  = "abcdefghijklmnopqrstuvwxyz";
+        String digits = "0123456789";
+        String punct  = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+
+        // To avoid using closest match overloading, which is Joos 2
+        Object clazz = (Object) className;
+
+        if ("alnum".equals(clazz))
+            return digits + upper + lower;
+        if ("alpha".equals(clazz))
+            return upper + lower;
+        if ("blank".equals(clazz))
+            return " \t";
+        if ("cntrl".equals(clazz)) {
+            StringBuffer sb = new StringBuffer();
+            char c = '\000';
+            while (c <= 31) {
+                sb.append(c);
+                c = (char) (c + 1);
+            }
+            sb.append((char) 127);
+            return sb.toString();
+        }
+        if ("digit".equals(clazz))
+            return digits;
+        if ("graph".equals(clazz))
+            return digits + upper + lower + punct;
+        if ("lower".equals(clazz))
+            return lower;
+        if ("print".equals(clazz))
+            return digits + upper + lower + punct;
+        if ("punct".equals(clazz))
+            return punct;
+        if ("space".equals(clazz))
+            return " \t\n\f\r\013";
+        if ("upper".equals(clazz))
+            return upper;
+        if ("xdigit".equals(clazz))
+            return digits + "abcdefABCDEF";
+
+        return "";
     }
 
     // TODO Handle octal escapes \NNN
@@ -122,6 +174,21 @@ public final class Translate {
                                   from + "-" + to +"' are in " +
                                   "reverse collating sequence order");
                     return false;
+                }
+            } else if (c == ':' && i > 0 && set.charAt(i - 1) == '[') {
+                int end = set.indexOf(":]", i);
+                if (end != -1) {
+                    String charClass = set.substring(i + 1, end);
+                    if (charClass.length() == 0) {
+                        Translate.err("missing character class name `[::]'");
+                        return false;
+                    }
+                    String expd = Translate.expandCharacterClass(charClass);
+                    if (expd.length() == 0) {
+                        Translate.err("invalid character class `" +
+                                      charClass + "'");
+                        return false;
+                    }
                 }
             } else if (c == '\\' && i == set.length() - 1) {
                 if (i == 0 || (i > 0 && set.charAt(i - 1) != '\\')) {

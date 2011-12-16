@@ -12,6 +12,7 @@ public final class Translate {
 
         String set1 = Translate.expand(args[0]);
         String set2 = Translate.expand(args[1]);
+        set2 = Translate.expandDependentRepeat(set2, set1);
 
         int[] table = Translate.buildTable(set1, set2);
 
@@ -43,7 +44,7 @@ public final class Translate {
                 int end = set.indexOf(":]", i);
                 if (end != -1) {
                     String charClass = set.substring(i + 2, end);
-                    expanded.append(Translate.expandCharacterClass(charClass));
+                    expanded.append(Translate.expandCharClass(charClass));
                     i = end + 1;
                 }
             } else if (c == '\\') {
@@ -57,7 +58,30 @@ public final class Translate {
         return expanded.toString();
     }
 
-    protected static String expandCharacterClass(String className) {
+    protected static String expandDependentRepeat(String set, String otherSet) {
+        int lengthWithout = Math.max(set.length() - "[c*]".length(), 0);
+        if (lengthWithout >= otherSet.length())
+            return set;
+
+        StringBuffer expanded = new StringBuffer();
+        for (int i = 0; i < set.length(); i = i + 1) {
+            char c = set.charAt(i);
+
+            if (c == '[' && i < set.length() - 3 &&
+                set.charAt(i+2) == '*' && set.charAt(i+3) == ']') {
+                char r = set.charAt(i+1);
+                int diff = otherSet.length() - lengthWithout;
+                for (int j = 0; j < diff; j = j + 1)
+                    expanded.append(r);
+                i = i + "[c*]".length() - 1;
+            } else {
+                expanded.append(c);
+            }
+        }
+        return expanded.toString();
+    }
+
+    protected static String expandCharClass(String className) {
         String upper  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         String lower  = "abcdefghijklmnopqrstuvwxyz";
         String digits = "0123456789";
@@ -151,13 +175,15 @@ public final class Translate {
             return false;
         }
 
-        if (!Translate.isSetOkay(args[0]) || !Translate.isSetOkay(args[1]))
+        if (!Translate.isSetOkay(args[0],1) || !Translate.isSetOkay(args[1],2))
             return false;
 
         return true;
     }
 
-    protected static boolean isSetOkay(String set) {
+    protected static boolean isSetOkay(String set, int setNum) {
+        boolean seenRepeatUntil = false;
+
         for (int i = 0; i < set.length(); i = i + 1) {
             char c = set.charAt(i);
 
@@ -175,19 +201,41 @@ public final class Translate {
                                   "reverse collating sequence order");
                     return false;
                 }
-            } else if (c == ':' && i > 0 && set.charAt(i - 1) == '[') {
+            } else if (c=='[' && i<set.length()-2 && set.charAt(i+1)==':') {
                 int end = set.indexOf(":]", i);
                 if (end != -1) {
-                    String charClass = set.substring(i + 1, end);
+                    String charClass = set.substring(i + 2, end);
                     if (charClass.length() == 0) {
                         Translate.err("missing character class name `[::]'");
                         return false;
                     }
-                    String expd = Translate.expandCharacterClass(charClass);
-                    if (expd.length() == 0) {
+                    if (Translate.expandCharClass(charClass).length() == 0) {
                         Translate.err("invalid character class `" +
                                       charClass + "'");
                         return false;
+                    }
+                    if (setNum == 2 &&
+                        !charClass.equals((Object) "lower") &&
+                        !charClass.equals((Object) "upper")) {
+                        Translate.err("when translating, the only character " +
+                                      "classes that may appear in\nstring2 " +
+                                      "are `upper' and `lower'");
+                        return false;
+                    }
+                }
+            } else if (c=='[' && i<set.length()-3 && set.charAt(i+2)=='*') {
+                if (set.charAt(i+3) == ']') {
+                    if (setNum == 1) {
+                        Translate.err("the [c*] repeat construct may not " +
+                                      "appear in string1");
+                        return false;
+                    } else if (setNum == 2) {
+                        if (seenRepeatUntil) {
+                            Translate.err("only one [c*] repeat construct " +
+                                          "may appear in string2");
+                            return false;
+                        }
+                        seenRepeatUntil = true;
                     }
                 }
             } else if (c == '\\' && i == set.length() - 1) {

@@ -5,19 +5,89 @@ import java.io.Reader;
 import java.util.Arrays;
 
 public final class Translate {
+    protected boolean delete = false;
+    protected boolean squeeze = false;
 
     public static void main(String[] args) throws IOException {
-        if (!Translate.areArgumentsOkay(args))
-            System.exit(1);
+        String set1 = "";
+        String set2 = "";
 
-        String set1 = Translate.expand(args[0]);
-        String set2 = Translate.expand(args[1]);
-        set2 = Translate.expandDependentRepeat(set2, set1);
+        boolean del = false;
+        boolean sqz = false;
 
-        int[] table = Translate.buildTable(set1, set2);
+        {
+            int i = 0;
+            while (i < args.length && args[i].startsWith("-")) {
+                String opts = args[i].substring(1);
+                for (int j = 0; j < opts.length(); j = j + 1) {
+                    if (opts.charAt(j) == 'd') {
+                        del = true;
+                    } else if (opts.charAt(j) == 's') {
+                        sqz = true;
+                    } else {
+                        char bad = opts.charAt(j);
+                        Translate.err("invalid option -- '" + bad + "'");
+                        System.exit(1);
+                    }
+                }
+                i = i + 1;
+            }
+
+            if (i < args.length)
+                set1 = args[i];
+            if (i < args.length - 1)
+                set2 = args[i+1];
+
+            boolean exit = false;
+            if (del && !sqz && i < args.length - 1) {
+                Translate.err("extra operand `" + args[i+1] + "'");
+                Translate.err("Only one string may be given when " +
+                              "deleting without squeezing repeats.");
+                exit = true;
+            } else if (i < args.length - 2) {
+                Translate.err("extra operand `" + args[i+1] + "'");
+                exit = true;
+            } else if (set1.length() == 0) {
+                Translate.err("missing operand");
+                exit = true;
+            } else if (del && sqz && set2.length() == 0) {
+                Translate.err("missing operand after `" + set1 + "'");
+                Translate.err("Two strings must be given when " +
+                              "both deleting and squeezing repeats.");
+                exit = true;
+            } else if (!del && !sqz && set2.length() == 0) {
+                Translate.err("Two strings must be given when translating.");
+                exit = true;
+            }
+
+            if (exit || !Translate.areSetsOkay(set1, set2))
+                System.exit(1);
+        }
 
         BufferedReader in =
             new BufferedReader((Reader) new InputStreamReader(System.in));
+        Translate tr = new Translate(del, sqz);
+        tr.translate((Reader) in, set1, set2);
+        in.close();
+    }
+
+    public Translate(boolean delete, boolean squeeze) {
+        this.delete = delete;
+        this.squeeze = squeeze;
+    }
+
+    public void translate(Reader in, String set1, String set2)
+        throws IOException {
+
+        // TODO Implement delete and squeeze
+        if (delete || squeeze) {
+            Translate.err("delete and squeeze aren't implemented yet");
+            return;
+        }
+
+        String exp1 = expand(set1);
+        String exp2 = expandDependentRepeat(expand(set2), set1);
+        int[] table = Translate.buildTable(exp1, exp2);
 
         int c = -1;
         while ((c = in.read()) != -1)
@@ -25,12 +95,10 @@ public final class Translate {
                 System.out.print((char) table[c]);
             else
                 System.out.print((char) c);
-
-        in.close();
     }
 
     // Precondition: !set.startsWith("-")
-    protected static String expand(String set) {
+    protected String expand(String set) {
         StringBuffer expanded = new StringBuffer();
 
         for (int i = 0; i < set.length(); i = i + 1) {
@@ -58,7 +126,7 @@ public final class Translate {
         return expanded.toString();
     }
 
-    protected static String expandDependentRepeat(String set, String otherSet) {
+    protected String expandDependentRepeat(String set, String otherSet) {
         int lengthWithout = Math.max(set.length() - "[c*]".length(), 0);
         if (lengthWithout >= otherSet.length())
             return set;
@@ -165,20 +233,8 @@ public final class Translate {
         return table;
     }
 
-    // For now we assume that args[0] is SET1 and args[1] is SET2
-    protected static boolean areArgumentsOkay(String[] args) {
-        if (args.length != 2) {
-            if (args.length < 2)
-                Translate.err("missing operand");
-            else
-                Translate.err("extra operand `" + args[2] + "'");
-            return false;
-        }
-
-        if (!Translate.isSetOkay(args[0],1) || !Translate.isSetOkay(args[1],2))
-            return false;
-
-        return true;
+    protected static boolean areSetsOkay(String set1, String set2) {
+        return Translate.isSetOkay(set1, 1) && Translate.isSetOkay(set2, 2);
     }
 
     protected static boolean isSetOkay(String set, int setNum) {
@@ -252,6 +308,4 @@ public final class Translate {
     protected static void err(String msg) {
         System.err.println("Translate: " + msg);
     }
-
-    public Translate() {}
 }

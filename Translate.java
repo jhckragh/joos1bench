@@ -26,7 +26,7 @@ public final class Translate {
                         sqz = true;
                     } else {
                         char bad = opts.charAt(j);
-                        Translate.err("invalid option -- '" + bad + "'");
+                        Translate.err("invalid option `" + bad + "'");
                         System.exit(1);
                     }
                 }
@@ -64,10 +64,10 @@ public final class Translate {
                 System.exit(1);
         }
 
-        BufferedReader in =
+        Reader in =
             new BufferedReader((Reader) new InputStreamReader(System.in));
         Translate tr = new Translate(del, sqz);
-        tr.translate((Reader) in, set1, set2);
+        tr.translate(in, set1, set2);
         in.close();
     }
 
@@ -79,26 +79,35 @@ public final class Translate {
     public void translate(Reader in, String set1, String set2)
         throws IOException {
 
-        // TODO Implement delete and squeeze
-        if (delete || squeeze) {
-            Translate.err("delete and squeeze aren't implemented yet");
-            return;
-        }
-
-        String exp1 = expand(set1);
-        String exp2 = expandDependentRepeat(expand(set2), set1);
+        char[] exp1 = expand(set1);
+        char[] exp2 = expandDependentRepeat(expand(set2), exp1);
         int[] table = Translate.buildTable(exp1, exp2);
 
+        Arrays.sort(exp1);
+        Arrays.sort(exp2);
+
+        char lastPrinted = '\377';
         int c = -1;
-        while ((c = in.read()) != -1)
+        while ((c = in.read()) != -1) {
+            char toPrint = (char) c;
+            boolean inExp1 = Arrays.binarySearch(exp1, toPrint) >= 0;
             if (c >= 0 && c <= 127 && table[c] != -1)
-                System.out.print((char) table[c]);
-            else
-                System.out.print((char) c);
+                toPrint = (char) table[c];
+            boolean inExp2 = Arrays.binarySearch(exp2, toPrint) >= 0;
+
+            boolean suppress = (delete && inExp1) ||
+                (!delete && squeeze && inExp1 && toPrint == lastPrinted) ||
+                (delete && squeeze && inExp2 && toPrint == lastPrinted);
+
+            if (!suppress) {
+                System.out.print(toPrint);
+                lastPrinted = toPrint;
+            }
+        }
     }
 
-    // Precondition: !set.startsWith("-")
-    protected String expand(String set) {
+    // Precondition: !set.startsWith("-") // FIXME
+    protected char[] expand(String set) {
         StringBuffer expanded = new StringBuffer();
 
         for (int i = 0; i < set.length(); i = i + 1) {
@@ -116,29 +125,28 @@ public final class Translate {
                     i = end + 1;
                 }
             } else if (c == '\\') {
-                expanded.append(Translate.unescape(set.charAt(i + 1)));
+                expanded.append(unescape(set.charAt(i + 1)));
                 i = i + 1;
             } else {
                 expanded.append(c);
             }
         }
 
-        return expanded.toString();
+        return expanded.toString().toCharArray();
     }
 
-    protected String expandDependentRepeat(String set, String otherSet) {
-        int lengthWithout = Math.max(set.length() - "[c*]".length(), 0);
-        if (lengthWithout >= otherSet.length())
+    protected char[] expandDependentRepeat(char[] set, char[] otherSet) {
+        int lengthWithout = Math.max(set.length - "[c*]".length(), 0);
+        if (lengthWithout >= otherSet.length)
             return set;
 
         StringBuffer expanded = new StringBuffer();
-        for (int i = 0; i < set.length(); i = i + 1) {
-            char c = set.charAt(i);
-
-            if (c == '[' && i < set.length() - 3 &&
-                set.charAt(i+2) == '*' && set.charAt(i+3) == ']') {
-                char r = set.charAt(i+1);
-                int diff = otherSet.length() - lengthWithout;
+        for (int i = 0; i < set.length; i = i + 1) {
+            char c = set[i];
+            if (c == '[' && i < set.length - 3 &&
+                set[i+2] == '*' && set[i+3] == ']') {
+                char r = set[i+1];
+                int diff = otherSet.length - lengthWithout;
                 for (int j = 0; j < diff; j = j + 1)
                     expanded.append(r);
                 i = i + "[c*]".length() - 1;
@@ -146,7 +154,7 @@ public final class Translate {
                 expanded.append(c);
             }
         }
-        return expanded.toString();
+        return expanded.toString().toCharArray();
     }
 
     protected static String expandCharClass(String className) {
@@ -194,8 +202,7 @@ public final class Translate {
         return "";
     }
 
-    // TODO Handle octal escapes \NNN
-    protected static char unescape(char c) {
+    protected char unescape(char c) {
         if (c == '\\')
             return '\\';
         if (c == 'a')
@@ -215,19 +222,19 @@ public final class Translate {
         return c;
     }
 
-    protected static int[] buildTable(String set1, String set2) {
+    // Precondition: from.length > 0
+    protected static int[] buildTable(char[] from, char[] to) {
         int[] table = new int[128];
         Arrays.fill(table, -1);
 
-        char[] from = set1.toCharArray();
-        char[] to = set2.toCharArray();
-
-        for (int i = 0; i < from.length; i = i + 1) {
-            char c = from[i];
-            if (i < to.length)
-                table[c] = to[i];
-            else
-                table[c] = to[to.length - 1];
+        if (to.length > 0) {
+            for (int i = 0; i < from.length; i = i + 1) {
+                char c = from[i];
+                if (i < to.length)
+                    table[c] = to[i];
+                else
+                    table[c] = to[to.length - 1];
+            }
         }
 
         return table;

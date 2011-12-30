@@ -40,23 +40,24 @@ public final class Translate {
 
             boolean exit = false;
             if (del && !sqz && i < args.length - 1) {
-                Translate.err("extra operand `" + args[i+1] + "'");
-                Translate.err("Only one string may be given when " +
-                              "deleting without squeezing repeats.");
+                String extra = Translate.joinFrom(args, i + 1);
+                Translate.err("unexpected operands: " + extra +
+                              "\nUsage: Translate -d SET");
                 exit = true;
             } else if (i < args.length - 2) {
-                Translate.err("extra operand `" + args[i+1] + "'");
+                String extra = Translate.joinFrom(args, i + 2);
+                Translate.err("unexpected operands: " + extra);
                 exit = true;
             } else if (set1.length() == 0) {
                 Translate.err("missing operand");
                 exit = true;
             } else if (del && sqz && set2.length() == 0) {
-                Translate.err("missing operand after `" + set1 + "'");
-                Translate.err("Two strings must be given when " +
-                              "both deleting and squeezing repeats.");
+                Translate.err("expected an operand after `" + set1 + "'" +
+                              "\nUsage: Translate -ds SET1 SET2");
                 exit = true;
             } else if (!del && !sqz && set2.length() == 0) {
-                Translate.err("Two strings must be given when translating.");
+                Translate.err("expected an operand after `" + set1 + "'" +
+                              "\nUsage: Translate SET1 SET2");
                 exit = true;
             }
 
@@ -222,7 +223,6 @@ public final class Translate {
         return c;
     }
 
-    // Precondition: from.length > 0
     protected static int[] buildTable(char[] from, char[] to) {
         int[] table = new int[128];
         Arrays.fill(table, -1);
@@ -259,9 +259,8 @@ public final class Translate {
                 char from = set.charAt(i - 1);
                 char to = set.charAt(i + 1);
                 if (to < from) {
-                    Translate.err("range-endpoints of `" +
-                                  from + "-" + to +"' are in " +
-                                  "reverse collating sequence order");
+                    Translate.err("the range `" + from + "-" + to + "' " +
+                                  "is empty");
                     return false;
                 }
             } else if (c=='[' && i<set.length()-2 && set.charAt(i+1)==':') {
@@ -280,22 +279,22 @@ public final class Translate {
                     if (setNum == 2 &&
                         !charClass.equals((Object) "lower") &&
                         !charClass.equals((Object) "upper")) {
-                        Translate.err("when translating, the only character " +
-                                      "classes that may appear in\nstring2 " +
-                                      "are `upper' and `lower'");
+                        Translate.err("the only character classes that " +
+                                      "may appear in\nSET2 are `upper' " +
+                                      "and `lower'");
                         return false;
                     }
                 }
             } else if (c=='[' && i<set.length()-3 && set.charAt(i+2)=='*') {
                 if (set.charAt(i+3) == ']') {
                     if (setNum == 1) {
-                        Translate.err("the [c*] repeat construct may not " +
-                                      "appear in string1");
+                        Translate.err("the [c*] repeat construct is only " +
+                                      "allowed in SET2");
                         return false;
                     } else if (setNum == 2) {
                         if (seenRepeatUntil) {
                             Translate.err("only one [c*] repeat construct " +
-                                          "may appear in string2");
+                                          "may appear in SET2");
                             return false;
                         }
                         seenRepeatUntil = true;
@@ -303,13 +302,23 @@ public final class Translate {
                 }
             } else if (c == '\\' && i == set.length() - 1) {
                 if (i == 0 || (i > 0 && set.charAt(i - 1) != '\\')) {
-                    Translate.err("unescaped backslash at end of string");
+                    Translate.err("unescaped backslash at end of set");
                     return false;
                 }
             }
         }
 
         return true;
+    }
+
+    protected static String joinFrom(String[] strings, int from) {
+        StringBuffer res = new StringBuffer();
+        for (int i = from; i < strings.length; i = i + 1) {
+            res.append(strings[i]);
+            if (i < strings.length - 1)
+                res.append(", ");
+        }
+        return res.toString();
     }
 
     protected static void err(String msg) {

@@ -107,13 +107,12 @@ public final class Translate {
         }
     }
 
-    // Precondition: !set.startsWith("-") // FIXME
     protected char[] expand(String set) {
         StringBuffer expanded = new StringBuffer();
 
         for (int i = 0; i < set.length(); i = i + 1) {
             char c = set.charAt(i);
-            if (c == '-' && i < set.length() - 1) {
+            if (c == '-' && 0 < i && i < set.length() - 1) {
                 char from = set.charAt(i - 1);
                 char to = set.charAt(i + 1);
                 for (char d = (char) (from + 1); d < to; d = (char) (d + 1))
@@ -255,7 +254,7 @@ public final class Translate {
                 return false;
             }
 
-            if (c == '-' && i < set.length() - 1) {
+            if (c == '-' && 0 < i && i < set.length() - 1) {
                 char from = set.charAt(i - 1);
                 char to = set.charAt(i + 1);
                 if (to < from) {

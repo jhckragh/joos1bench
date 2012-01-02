@@ -53,6 +53,8 @@ public class Echo {
                     res.append('\007');
                 } else if (c == 'b') {
                     res.append('\b');
+                } else if (c == 'e') {
+                    res.append('\033');
                 } else if (c == 'f') {
                     res.append('\f');
                 } else if (c == 'n') {

@@ -40,7 +40,7 @@ public class Echo {
         }
     }
 
-    // TODO Add support for octal and hexadecimal escapes
+    // TODO Add support for hexadecimal escapes
     public static String unescape(String s) {
         StringBuffer res = new StringBuffer();
 
@@ -64,13 +64,25 @@ public class Echo {
                     res.append('\t');
                 } else if (c == 'v') {
                     res.append('\013');
+                } else if (c == '0') {
+                    String octal = "0";
+                    int j = i + 2;
+                    while (j < s.length() && j < i + 5 &&
+                           '0' <= s.charAt(j) && s.charAt(j) <= '7') {
+                        octal = octal + s.charAt(j);
+                        j = j + 1;
+                    }
+                    if (octal.length() > 1) {
+                        res.append((char) Integer.decode(octal).intValue());
+                        i = j - 2;
+                    }
                 } else {
                     isEscape = false;
                 }
             }
 
             if (isEscape)
-                i = i + 1; // skip c
+                i = i + 1; // skip
             else
                 res.append(s.charAt(i));
         }

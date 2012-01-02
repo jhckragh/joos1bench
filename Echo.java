@@ -40,7 +40,6 @@ public class Echo {
         }
     }
 
-    // TODO Add support for hexadecimal escapes
     public static String unescape(String s) {
         StringBuffer res = new StringBuffer();
 
@@ -68,12 +67,24 @@ public class Echo {
                     String octal = "0";
                     int j = i + 2;
                     while (j < s.length() && j < i + 5 &&
-                           '0' <= s.charAt(j) && s.charAt(j) <= '7') {
+                           Character.digit(s.charAt(j), 8) != -1) {
                         octal = octal + s.charAt(j);
                         j = j + 1;
                     }
                     if (octal.length() > 1) {
                         res.append((char) Integer.decode(octal).intValue());
+                        i = j - 2;
+                    }
+                } else if (c == 'x') {
+                    String hex = "#";
+                    int j = i + 2;
+                    while (j < s.length() && j < i + 4 &&
+                           Character.digit(s.charAt(j), 16) != -1) {
+                        hex = hex + s.charAt(j);
+                        j = j + 1;
+                    }
+                    if (hex.length() > 1) {
+                        res.append((char) Integer.decode(hex).intValue());
                         i = j - 2;
                     }
                 } else {

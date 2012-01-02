@@ -2,13 +2,15 @@ package textutils;
 
 public class Echo {
     public static void main(String[] args) {
+        boolean acceptOptions = true;
+
         boolean printNewline = true;
         boolean interpretEscapes = false;
 
         for (int i = 0; i < args.length; i = i + 1) {
             boolean isOption = false;
 
-            if (args[i].startsWith("-")) {
+            if (args[i].startsWith("-") && acceptOptions) {
                 boolean onlyLegalFlags = true;
                 for (int j = 1; j < args[i].length(); j = j + 1) {
                     char c = args[i].charAt(j);
@@ -26,6 +28,8 @@ public class Echo {
                             interpretEscapes = false;
                     }
                 }
+            } else {
+                acceptOptions = false;
             }
 
             if (!isOption) {

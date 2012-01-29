@@ -1,0 +1,58 @@
+Program = { Token | Separator } .
+
+Token = Identifier | IntegerLiteral | CharacterLiteral | StringLiteral |
+        LogicalOperator | RelationalOperator | ArithmeticOperator |
+        "abstract" | "boolean" | "break" | "byte" |
+        "case" | "catch" | "char" | "class" |
+        "const" | "continue" | "default" | "do" |
+        "double" | "else" | "extends" | "final" |
+        "finally" | "float" | "for" | "goto" |
+        "if" | "implements" | "import" | "instanceof" |
+        "int" | "interface" | "long" | "native" |
+        "new" | "package" | "private" | "protected" |
+        "public" | "return" | "short" | "static" |
+        "strictfp" | "super" | "switch" | "synchronized" |
+        "this" | "throw" | "throws" | "transient" |
+        "try" | "void" | "volatile" | "while" |
+        "true" | "false" | "null" |
+        "(" | ")" | "{" | "}" | "[" | "]" |
+        ";" | "," | "." | "=" .
+
+Identifier = java-letter { java-letter | Digit } .
+
+IntegerLiteral = "0" | NonzeroDigit { Digit } .
+
+Digit = "0" | NonzeroDigit .
+
+NonzeroDigit = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" .
+
+CharacterLiteral = "'" ( single-character | EscapeSequence ) "'" .
+
+StringLiteral = """" { string-character | EscapeSequence } """" .
+
+EscapeSequence = "\b" | "\t" | "\n" | "\f" | "\r" | "\""" | "\'" | "\\" |
+                 OctalEscape .
+
+OctalEscape = "\" ( OctalDigit [ OctalDigit ] |
+                    ( "0" | "1" | "2" ) OctalDigit OctalDigit ) . 
+
+LogicalOperator = "!" | "&&" | "||" .
+
+RelationalOperator = "<" | ">" | "==" | "<=" | ">=" | "!=" .
+
+ArithmeticOperator = "+" | "-" | "*" | "/" | "&" |
+                     "|" | "^" | "%" | "++" | "--" .
+
+Separator = Comment | Blank .
+
+Comment = TraditionalComment | EndOfLineComment .
+
+TraditionalComment = "/*" CommentTail .
+
+CommentTail = "*" CommentTailStar | not-star CommentTail .
+
+CommentTailStar = "/" | "*" CommentTailStar | not-star-not-slash CommentTail .
+
+EndOfLineComment = "//" { input-character } end-of-line .
+
+Blank = space | tab | form-feed | end-of-line .

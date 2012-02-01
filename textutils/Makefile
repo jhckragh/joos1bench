@@ -1,5 +1,5 @@
 JOOS        := camljoos2
-JOOSFLAGS   := -joos1
+JOOS_FLAGS  := -joos1
 
 JASMIN      := jasmin
 
@@ -32,5 +32,5 @@ prepare:
 	$(JASMIN) -d $(OUTPUT_DIR) $(SOURCE_DIR)/$<
 
 %.j: %.java
-	$(JOOS) $(JOOSFLAGS) $<
+	$(JOOS) $(JOOS_FLAGS) $<
 	$(SED) -i $(field-fixup) $(subst .java,.j,$<)

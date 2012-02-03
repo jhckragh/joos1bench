@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<project name="joos1lexer" default="compile">
+
+  <property name="joosc" value="camljoos2" />
+
+  <property name="src.dir" location="src/joos1lexer" />
+  <property name="lib.dir" location="lib" />
+  <property name="build.dir" location="build" />
+  <property name="build.classes.dir" location="${build.dir}/classes" />
+  <property name="test.dir" location="${build.dir}/test" />
+  <property name="test.src.dir" location="test/joos1lexer" />
+  <property name="test.classes.dir" location="${test.dir}/classes" />
+
+  <path id="test.compile.classpath">
+    <pathelement location="${lib.dir}/junit-3.8.2.jar" />
+    <pathelement location="${build.classes.dir}" />
+  </path>
+
+  <path id="test.classpath">
+    <path refid="test.compile.classpath" />
+    <pathelement location="${test.classes.dir}" />
+  </path>
+
+  <target name="init">
+    <mkdir dir="${build.classes.dir}" />
+  </target>
+
+  <target name="clean">
+    <delete dir="${build.dir}" />
+  </target>
+
+  <target name="compile" depends="init">
+    <apply executable="${joosc}" parallel="true" failonerror="true">
+      <arg value="-joos1" />
+      <fileset dir="${src.dir}" includes="*.java" />
+    </apply>
+    <replaceregexp byline="true">
+      <regexp pattern='\.field ([a-z]+) "([a-zA-Z0-9_$]+)"' />
+      <substitution expression=".field \1 \2" />
+      <fileset dir="${src.dir}">
+        <include name="*.j" />
+      </fileset>
+    </replaceregexp>
+    <apply executable="jasmin" parallel="true" verbose="true">
+      <arg value="-d" />
+      <arg value="${build.classes.dir}" />
+      <fileset dir="${src.dir}" includes="*.j" />
+    </apply>
+    <delete>
+      <fileset dir="${src.dir}" includes="*.j" />
+    </delete>
+  </target>
+
+  <target name="test-init">
+    <mkdir dir="${test.classes.dir}" />
+  </target>
+
+  <target name="test-compile" depends="compile, test-init">
+    <apply executable="${joosc}" parallel="true" failonerror="true">
+      <arg value="-joos1" />
+      <arg value="-cp" />
+      <arg pathref="test.compile.classpath" />
+      <fileset dir="${test.src.dir}" includes="*.java" />
+    </apply>
+    <replaceregexp byline="true">
+      <regexp pattern='\.field ([a-z]+) "([a-zA-Z0-9_$]+)"' />
+      <substitution expression=".field \1 \2" />
+      <fileset dir="${test.src.dir}" includes="*.j" />
+    </replaceregexp>
+    <apply executable="jasmin" parallel="true" verbose="true">
+      <arg value="-d" />
+      <arg value="${test.classes.dir}" />
+      <fileset dir="${test.src.dir}" includes="*.j" />
+    </apply>
+    <delete>
+      <fileset dir="${test.src.dir}" includes="*.j" />
+    </delete>    
+  </target>
+
+  <target name="test" depends="test-compile">
+    <junit printsummary="false" haltonfailure="yes">
+      <classpath refid="test.classpath" />
+      <formatter type="brief" usefile="false" />
+      <test name="joos1lexer.LexerTest" />
+    </junit>
+  </target>
+
+</project>

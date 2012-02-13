@@ -14,18 +14,31 @@ public class LexerTest extends TestCase {
 
     public LexerTest() {}
 
+    protected void assertByteEquals(byte expected, byte actual) {
+        Assert.assertEquals((Object) new Byte(expected),
+                            (Object) new Byte(actual));
+    }
+
+    protected void assertIntEquals(int expected, int actual) {
+        Assert.assertEquals((Object) new Integer(expected),
+                            (Object) new Integer(actual));
+    }
+
+    protected void assertStringEquals(String expected, String actual) {
+        Assert.assertEquals((Object) expected, (Object) actual);
+    }
+
     public void testBareMinimum() throws Exception {
         String input = "{";
         Lexer lexer = new Lexer((Reader) new StringReader(input));
 
         Token lbrace = lexer.nextToken();
-        Assert.assertTrue(" { [kind]", lbrace.kind() == constants.L_BRACE);
-        Assert.assertTrue(" { [text]", lbrace.text().equals((Object) "{"));
-        Assert.assertTrue(" { [line]", lbrace.line() == 1);
-        Assert.assertTrue(" { [column: " + lbrace.column() + "]", lbrace.column() == 0);
+        assertByteEquals(constants.L_BRACE, lbrace.kind());
+        assertStringEquals("{", lbrace.text());
+        assertIntEquals(1, lbrace.line());
+        assertIntEquals(0, lbrace.column());
 
-        Token eot = lexer.nextToken();
-        Assert.assertTrue("<eot>", eot.kind() == constants.EOT);
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
 
     public void testDelimiters() throws Exception {
@@ -33,43 +46,42 @@ public class LexerTest extends TestCase {
         Lexer lexer = new Lexer((Reader) new StringReader(input));
 
         Token lbrace = lexer.nextToken();
-        Assert.assertTrue(" { [kind]", lbrace.kind() == constants.L_BRACE);
-        Assert.assertTrue(" { [text]", lbrace.text().equals((Object) "{"));
-        Assert.assertTrue(" { [line]", lbrace.line() == 1);
-        Assert.assertTrue(" { [column]", lbrace.column() == 0);
+        assertByteEquals(constants.L_BRACE, lbrace.kind());
+        assertStringEquals("{", lbrace.text());
+        assertIntEquals(1, lbrace.line());
+        assertIntEquals(0, lbrace.column());
 
         Token rbrace = lexer.nextToken();
-        Assert.assertTrue(" } [kind]", rbrace.kind() == constants.R_BRACE);
-        Assert.assertTrue(" } [text]", rbrace.text().equals((Object) "}"));
-        Assert.assertTrue(" } [line]", rbrace.line() == 1);
-        Assert.assertTrue(" } [column]", rbrace.column() == 1);
+        assertByteEquals(constants.R_BRACE, rbrace.kind());
+        assertStringEquals("}", rbrace.text());
+        assertIntEquals(1, rbrace.line());
+        assertIntEquals(1, rbrace.column());
 
         Token lbracket = lexer.nextToken();
-        Assert.assertTrue(" [ [kind]", lbracket.kind() == constants.L_BRACKET);
-        Assert.assertTrue(" [ [text]", lbracket.text().equals((Object) "["));
-        Assert.assertTrue(" [ [line]", lbracket.line() == 1);
-        Assert.assertTrue(" [ [column]", lbracket.column() == 2);
+        assertByteEquals(constants.L_BRACKET, lbracket.kind());
+        assertStringEquals("[", lbracket.text());
+        assertIntEquals(1, lbracket.line());
+        assertIntEquals(2, lbracket.column());
 
         Token rbracket = lexer.nextToken();
-        Assert.assertTrue(" ] [kind]", rbracket.kind() == constants.R_BRACKET);
-        Assert.assertTrue(" ] [text]", rbracket.text().equals((Object) "]"));
-        Assert.assertTrue(" ] [line]", rbracket.line() == 1);
-        Assert.assertTrue(" ] [column]", rbracket.column() == 3);
+        assertByteEquals(constants.R_BRACKET, rbracket.kind());
+        assertStringEquals("]", rbracket.text());
+        assertIntEquals(1, rbracket.line());
+        assertIntEquals(3, rbracket.column());
 
         Token lparen = lexer.nextToken();
-        Assert.assertTrue(" ( [kind]", lparen.kind() == constants.L_PAREN);
-        Assert.assertTrue(" ( [text]", lparen.text().equals((Object) "("));
-        Assert.assertTrue(" ( [line]", lparen.line() == 1);
-        Assert.assertTrue(" ( [column]", lparen.column() == 4);
+        assertByteEquals(constants.L_PAREN, lparen.kind());
+        assertStringEquals("(", lparen.text());
+        assertIntEquals(1, lparen.line());
+        assertIntEquals(4, lparen.column());
 
         Token rparen = lexer.nextToken();
-        Assert.assertTrue(" ) [kind]", rparen.kind() == constants.R_PAREN);
-        Assert.assertTrue(" ) [text]", rparen.text().equals((Object) ")"));
-        Assert.assertTrue(" ) [line]", rparen.line() == 1);
-        Assert.assertTrue(" ) [column]", rparen.column() == 5);
+        assertByteEquals(constants.R_PAREN, rparen.kind());
+        assertStringEquals(")", rparen.text());
+        assertIntEquals(1, rparen.line());
+        assertIntEquals(5, rparen.column());
 
-        Token eot = lexer.nextToken();
-        Assert.assertTrue("<eot>", eot.kind() == constants.EOT);
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
 
     public void testPunctuation() throws Exception {
@@ -77,31 +89,73 @@ public class LexerTest extends TestCase {
         Lexer lexer = new Lexer((Reader) new StringReader(input));
 
         Token semi = lexer.nextToken();
-        Assert.assertTrue(" ; [kind]", semi.kind() == constants.SEMICOLON);
-        Assert.assertTrue(" ; [text]", semi.text().equals((Object) ";"));
-        Assert.assertTrue(" ; [line]", semi.line() == 1);
-        Assert.assertTrue(" ; [column]", semi.column() == 0);
+        assertByteEquals(constants.SEMICOLON, semi.kind());
+        assertStringEquals(";", semi.text());
+        assertIntEquals(1, semi.line());
+        assertIntEquals(0, semi.column());
 
         Token comma = lexer.nextToken();
-        Assert.assertTrue(" , [kind]", comma.kind() == constants.COMMA);
-        Assert.assertTrue(" , [text]", comma.text().equals((Object) ","));
-        Assert.assertTrue(" , [line]", comma.line() == 1);
-        Assert.assertTrue(" , [column]", comma.column() == 1);
+        assertByteEquals(constants.COMMA, comma.kind());
+        assertStringEquals(",", comma.text());
+        assertIntEquals(1, comma.line());
+        assertIntEquals(1, comma.column());
 
         Token dot = lexer.nextToken();
-        Assert.assertTrue(" . [kind]", dot.kind() == constants.DOT);
-        Assert.assertTrue(" . [text]", dot.text().equals((Object) "."));
-        Assert.assertTrue(" . [line]", dot.line() == 1);
-        Assert.assertTrue(" . [column]", dot.column() == 2);
+        assertByteEquals(constants.DOT, dot.kind());
+        assertStringEquals(".", dot.text());
+        assertIntEquals(1, dot.line());
+        assertIntEquals(2, dot.column());
 
         Token assign = lexer.nextToken();
-        Assert.assertTrue(" = [kind]", assign.kind() == constants.ASSIGN);
-        Assert.assertTrue(" = [text]", assign.text().equals((Object) "="));
-        Assert.assertTrue(" = [line]", assign.line() == 1);
-        Assert.assertTrue(" = [column]", assign.column() == 3);
+        assertByteEquals(constants.ASSIGN, assign.kind());
+        assertStringEquals("=", assign.text());
+        assertIntEquals(1, assign.line());
+        assertIntEquals(3, assign.column());
 
-        Token eot = lexer.nextToken();
-        Assert.assertTrue("<eot>", eot.kind() == constants.EOT);
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
+    }
+
+    public void testRelationalOperator() throws Exception {
+        String input = "< > == <= >= !=";
+        Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+        Token lt = lexer.nextToken();
+        assertByteEquals(constants.LT, lt.kind());
+        assertStringEquals("<", lt.text());
+        assertIntEquals(1, lt.line());
+        assertIntEquals(0, lt.column());
+
+        Token gt = lexer.nextToken();
+        assertByteEquals(constants.GT, gt.kind());
+        assertStringEquals(">", gt.text());
+        assertIntEquals(1, gt.line());
+        assertIntEquals(2, gt.column());
+
+        Token eq = lexer.nextToken();
+        assertByteEquals(constants.EQ, eq.kind());
+        assertStringEquals("==", eq.text());
+        assertIntEquals(1, eq.line());
+        assertIntEquals(4, eq.column());
+
+        Token lteq = lexer.nextToken();
+        assertByteEquals(constants.LTEQ, lteq.kind());
+        assertStringEquals("<=", lteq.text());
+        assertIntEquals(1, lteq.line());
+        assertIntEquals(7, lteq.column());
+
+        Token gteq = lexer.nextToken();
+        assertByteEquals(constants.GTEQ, gteq.kind());
+        assertStringEquals(">=", gteq.text());
+        assertIntEquals(1, gteq.line());
+        assertIntEquals(10, gteq.column());
+
+        Token neq = lexer.nextToken();
+        assertByteEquals(constants.NEQ, neq.kind());
+        assertStringEquals("!=", neq.text());
+        assertIntEquals(1, neq.line());
+        assertIntEquals(13, neq.column());
+
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
 
     // public void testMinimal() throws Exception {

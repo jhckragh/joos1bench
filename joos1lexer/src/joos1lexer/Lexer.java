@@ -25,6 +25,14 @@ public final class Lexer {
     public Token nextToken() throws IOException {
         if (currentChar == -1)
             takeIt();
+
+        while (currentChar == ' ' ||
+               currentChar == '\t' ||
+               currentChar == '\f' ||
+               currentChar == '\r' ||
+               currentChar == '\n')
+            takeIt();
+
         return scanToken();
     }
 
@@ -32,64 +40,88 @@ public final class Lexer {
         if (currentChar == -1)
             return new Token(constants.EOT, "<eot>", line, column);
 
+        int startLine = line;
+        int startColumn = column;
+
         if (currentChar == '{') {
-            Token lbrace = new Token(constants.L_BRACE, "{", line, column);
             takeIt();
-            return lbrace;
+            return new Token(constants.L_BRACE, "{", startLine, startColumn);
         }
 
         if (currentChar == '}') {
-            Token rbrace = new Token(constants.R_BRACE, "}", line, column);
             takeIt();
-            return rbrace;
+            return new Token(constants.R_BRACE, "}", startLine, startColumn);
         }
 
         if (currentChar == '[') {
-            Token lbracket = new Token(constants.L_BRACKET, "[", line, column);
             takeIt();
-            return lbracket;
+            return new Token(constants.L_BRACKET, "[", startLine, startColumn);
         }
 
         if (currentChar == ']') {
-            Token rbracket = new Token(constants.R_BRACKET, "]", line, column);
             takeIt();
-            return rbracket;
+            return new Token(constants.R_BRACKET, "]", startLine, startColumn);
         }
 
         if (currentChar == '(') {
-            Token lparen = new Token(constants.L_PAREN, "(", line, column);
             takeIt();
-            return lparen;
+            return new Token(constants.L_PAREN, "(", startLine, startColumn);
         }
 
         if (currentChar == ')') {
-            Token rparen = new Token(constants.R_PAREN, ")", line, column);
             takeIt();
-            return rparen;
+            return new Token(constants.R_PAREN, ")", startLine, startColumn);
         }
 
         if (currentChar == ';') {
-            Token semi = new Token(constants.SEMICOLON, ";", line, column);
             takeIt();
-            return semi;
+            return new Token(constants.SEMICOLON, ";", startLine, startColumn);
         }
 
         if (currentChar == ',') {
-            Token comma = new Token(constants.COMMA, ",", line, column);
             takeIt();
-            return comma;
+            return new Token(constants.COMMA, ",", startLine, startColumn);
         }        
 
         if (currentChar == '.') {
-            Token dot = new Token(constants.DOT, ".", line, column);
             takeIt();
-            return dot;
+            return new Token(constants.DOT, ".", startLine, startColumn);
         }
 
         if (currentChar == '=') {
-            Token assign = new Token(constants.ASSIGN, "=", line, column);
             takeIt();
-            return assign;
+            if (currentChar == '=') {
+                takeIt();
+                return new Token(constants.EQ, "==", startLine, startColumn);
+            }
+            return new Token(constants.ASSIGN, "=", startLine, startColumn);
+        }
+
+        if (currentChar == '<') {
+            takeIt();
+            if (currentChar == '=') {
+                takeIt();
+                return new Token(constants.LTEQ, "<=", startLine, startColumn);
+            }
+            return new Token(constants.LT, "<", startLine, startColumn);
+        }
+
+        if (currentChar == '>') {
+            takeIt();
+            if (currentChar == '=') {
+                takeIt();
+                return new Token(constants.GTEQ, ">=", startLine, startColumn);
+            }
+            return new Token(constants.GT, ">", startLine, startColumn);
+        }
+
+        if (currentChar == '!') {
+            takeIt();
+            if (currentChar == '=') {
+                takeIt();
+                return new Token(constants.NEQ, "!=", startLine, startColumn);
+            }
+            return new Token(constants.COMPLEMENT, "!", startLine, startColumn);
         }
 
         return new Token(constants.ERROR, "<error>", line, column);

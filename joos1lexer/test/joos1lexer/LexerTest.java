@@ -158,6 +158,98 @@ public class LexerTest extends TestCase {
         assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
 
+    public void testArithmeticOperator() throws Exception {
+        String input = "+ - * / & | ^ % ++ --";
+        Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+        Token plus = lexer.nextToken();
+        assertByteEquals(constants.PLUS, plus.kind());
+        assertStringEquals("+", plus.text());
+        assertIntEquals(1, plus.line());
+        assertIntEquals(0, plus.column());
+
+        Token minus = lexer.nextToken();
+        assertByteEquals(constants.MINUS, minus.kind());
+        assertStringEquals("-", minus.text());
+        assertIntEquals(1, minus.line());
+        assertIntEquals(2, minus.column());
+
+        Token star = lexer.nextToken();
+        assertByteEquals(constants.STAR, star.kind());
+        assertStringEquals("*", star.text());
+        assertIntEquals(1, star.line());
+        assertIntEquals(4, star.column());
+
+        Token div = lexer.nextToken();
+        assertByteEquals(constants.DIV, div.kind());
+        assertStringEquals("/", div.text());
+        assertIntEquals(1, div.line());
+        assertIntEquals(6, div.column());
+
+        Token and = lexer.nextToken();
+        assertByteEquals(constants.AND, and.kind());
+        assertStringEquals("&", and.text());
+        assertIntEquals(1, and.line());
+        assertIntEquals(8, and.column());
+
+        Token or = lexer.nextToken();
+        assertByteEquals(constants.OR, or.kind());
+        assertStringEquals("|", or.text());
+        assertIntEquals(1, or.line());
+        assertIntEquals(10, or.column());
+
+        Token xor = lexer.nextToken();
+        assertByteEquals(constants.XOR, xor.kind());
+        assertStringEquals("^", xor.text());
+        assertIntEquals(1, xor.line());
+        assertIntEquals(12, xor.column());
+
+        Token mod = lexer.nextToken();
+        assertByteEquals(constants.MOD, mod.kind());
+        assertStringEquals("%", mod.text());
+        assertIntEquals(1, mod.line());
+        assertIntEquals(14, mod.column());
+
+        Token plusplus = lexer.nextToken();
+        assertByteEquals(constants.PLUS_PLUS, plusplus.kind());
+        assertStringEquals("++", plusplus.text());
+        assertIntEquals(1, plusplus.line());
+        assertIntEquals(16, plusplus.column());
+
+        Token minusminus = lexer.nextToken();
+        assertByteEquals(constants.MINUS_MINUS, minusminus.kind());
+        assertStringEquals("--", minusminus.text());
+        assertIntEquals(1, minusminus.line());
+        assertIntEquals(19, minusminus.column());
+
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
+    }
+
+    public void testLogicalOperators() throws Exception {
+        String input = "! && ||";
+        Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+        Token complement = lexer.nextToken();
+        assertByteEquals(constants.COMPLEMENT, complement.kind());
+        assertStringEquals("!", complement.text());
+        assertIntEquals(1, complement.line());
+        assertIntEquals(0, complement.column());
+
+        Token andand = lexer.nextToken();
+        assertByteEquals(constants.AND_AND, andand.kind());
+        assertStringEquals("&&", andand.text());
+        assertIntEquals(1, andand.line());
+        assertIntEquals(2, andand.column());
+
+        Token oror = lexer.nextToken();
+        assertByteEquals(constants.OR_OR, oror.kind());
+        assertStringEquals("||", oror.text());
+        assertIntEquals(1, oror.line());
+        assertIntEquals(5, oror.column());
+
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
+    }
+
     // public void testMinimal() throws Exception {
     //     String input = "public class Minimal {}";
     //     Lexer lexer = new Lexer((Reader) new StringReader(input));

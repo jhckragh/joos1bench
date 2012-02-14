@@ -250,6 +250,49 @@ public class LexerTest extends TestCase {
         assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
 
+    public void testIdentifiers() throws Exception {
+        String input = "String i3 $ _ MAX_VALUE isLetterOrDigit";
+        Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+        Token string = lexer.nextToken();
+        assertByteEquals(constants.IDENTIFIER, string.kind());
+        assertStringEquals("String", string.text());
+        assertIntEquals(1, string.line());
+        assertIntEquals(0, string.column());
+
+        Token i3 = lexer.nextToken();
+        assertByteEquals(constants.IDENTIFIER, i3.kind());
+        assertStringEquals("i3", i3.text());
+        assertIntEquals(1, i3.line());
+        assertIntEquals(7, i3.column());
+
+        Token $ = lexer.nextToken();
+        assertByteEquals(constants.IDENTIFIER, $.kind());
+        assertStringEquals("$", $.text());
+        assertIntEquals(1, $.line());
+        assertIntEquals(10, $.column());
+
+        Token _ = lexer.nextToken();
+        assertByteEquals(constants.IDENTIFIER, _.kind());
+        assertStringEquals("_", _.text());
+        assertIntEquals(1, _.line());
+        assertIntEquals(12, _.column());
+
+        Token MAX_VALUE = lexer.nextToken();
+        assertByteEquals(constants.IDENTIFIER, MAX_VALUE.kind());
+        assertStringEquals("MAX_VALUE", MAX_VALUE.text());
+        assertIntEquals(1, MAX_VALUE.line());
+        assertIntEquals(14, MAX_VALUE.column());
+
+        Token isLetterOrDigit = lexer.nextToken();
+        assertByteEquals(constants.IDENTIFIER, isLetterOrDigit.kind());
+        assertStringEquals("isLetterOrDigit", isLetterOrDigit.text());
+        assertIntEquals(1, isLetterOrDigit.line());
+        assertIntEquals(24, isLetterOrDigit.column());
+
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
+    }
+
     // public void testMinimal() throws Exception {
     //     String input = "public class Minimal {}";
     //     Lexer lexer = new Lexer((Reader) new StringReader(input));

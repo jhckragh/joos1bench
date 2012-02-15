@@ -78,6 +78,21 @@ public final class Lexer {
             return new Token(constants.INTEGER_LITERAL, sb.toString(), line, column);
         }
 
+        // Character literals
+        if (currentChar == '\'') {
+            takeIt();
+            if (currentChar >= '\000' && currentChar <= '\255') {
+                char c = (char) currentChar;
+                takeIt();
+                if (c == '\r' || c == '\n' || c == '\\' || currentChar != '\'')
+                    return new Token(constants.ERROR, "<error>", line, column);
+                takeIt();
+                return new Token(constants.CHAR_LITERAL, "'" + c + "'", line, column);
+            } else {
+                return new Token(constants.ERROR, "<error>", line, column);
+            }
+        }
+
         // Delimiters
         if (currentChar == '{') {
             takeIt();

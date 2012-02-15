@@ -684,5 +684,29 @@ public class LexerTest extends TestCase {
 
         assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
-    
+
+    public void testSingleCharacterCharacterLiterals() throws Exception {
+        String input = "'a' '%' '0'";
+        Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+        Token a = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, a.kind());
+        assertStringEquals("'a'", a.text());
+        assertIntEquals(1, a.line());
+        assertIntEquals(0, a.column());
+
+        Token percent = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, percent.kind());
+        assertStringEquals("'%'", percent.text());
+        assertIntEquals(1, percent.line());
+        assertIntEquals(4, percent.column());
+
+        Token zero = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, zero.kind());
+        assertStringEquals("'0'", zero.text());
+        assertIntEquals(1, zero.line());
+        assertIntEquals(8, zero.column());
+
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
+    }
 }

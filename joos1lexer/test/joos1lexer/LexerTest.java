@@ -115,7 +115,7 @@ public class LexerTest extends TestCase {
         assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
 
-    public void testRelationalOperator() throws Exception {
+    public void testRelationalOperators() throws Exception {
         String input = "< > == <= >= !=";
         Lexer lexer = new Lexer((Reader) new StringReader(input));
 
@@ -158,7 +158,7 @@ public class LexerTest extends TestCase {
         assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
 
-    public void testArithmeticOperator() throws Exception {
+    public void testArithmeticOperators() throws Exception {
         String input = "+ - * / & | ^ % ++ --";
         Lexer lexer = new Lexer((Reader) new StringReader(input));
 

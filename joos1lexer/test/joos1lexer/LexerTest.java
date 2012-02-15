@@ -611,7 +611,7 @@ public class LexerTest extends TestCase {
         assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
 
-    public void testIntegerLiteral() throws Exception {
+    public void testIntegerLiterals() throws Exception {
         String input = "0 2 2147483647 1996\n11";
         Lexer lexer = new Lexer((Reader) new StringReader(input));
 
@@ -684,4 +684,5 @@ public class LexerTest extends TestCase {
 
         assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
+    
 }

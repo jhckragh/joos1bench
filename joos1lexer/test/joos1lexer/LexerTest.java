@@ -611,44 +611,77 @@ public class LexerTest extends TestCase {
         assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
 
-    // public void testMinimal() throws Exception {
-    //     String input = "public class Minimal {}";
-    //     Lexer lexer = new Lexer((Reader) new StringReader(input));
-    //     TokenConstants kinds = new TokenConstants();
+    public void testIntegerLiteral() throws Exception {
+        String input = "0 2 2147483647 1996\n11";
+        Lexer lexer = new Lexer((Reader) new StringReader(input));
 
-    //     Token token = null;
+        Token zero = lexer.nextToken();
+        assertByteEquals(constants.INTEGER_LITERAL, zero.kind());
+        assertStringEquals("0", zero.text());
+        assertIntEquals(1, zero.line());
+        assertIntEquals(0, zero.column());
 
-    //     token = lexer.nextToken();
-    //     Assert.assertTrue("public", token.kind() == kinds.PUBLIC);
-    //     Assert.assertTrue("public[text]", token.text().equals((Object) "public"));
-    //     Assert.assertTrue("public[line]", token.line() == 1);
-    //     Assert.assertTrue("public[column]", token.column() == 0);
+        Token two = lexer.nextToken();
+        assertByteEquals(constants.INTEGER_LITERAL, two.kind());
+        assertStringEquals("2", two.text());
+        assertIntEquals(1, two.line());
+        assertIntEquals(2, two.column());
 
-    //     token = lexer.nextToken();
-    //     Assert.assertTrue("class", token.kind() == kinds.CLASS);
-    //     Assert.assertTrue("class[text]", token.text().equals((Object) "class"));
-    //     Assert.assertTrue("class[line]", token.line() == 1);
-    //     Assert.assertTrue("class[column]", token.column() == 7);
+        Token elGordo = lexer.nextToken();
+        assertByteEquals(constants.INTEGER_LITERAL, elGordo.kind());
+        assertStringEquals("2147483647", elGordo.text());
+        assertIntEquals(1, elGordo.line());
+        assertIntEquals(4, elGordo.column());
 
-    //     token = lexer.nextToken();
-    //     Assert.assertTrue("<id>", token.kind() == kinds.IDENTIFIER);
-    //     Assert.assertTrue("<id>[text]", token.text().equals((Object) "Minimal"));
-    //     Assert.assertTrue("<id>[line]", token.line() == 1);
-    //     Assert.assertTrue("<id>[column]", token.column() == 13);
+        Token nineteenNinetySix = lexer.nextToken();
+        assertByteEquals(constants.INTEGER_LITERAL, nineteenNinetySix.kind());
+        assertStringEquals("1996", nineteenNinetySix.text());
+        assertIntEquals(1, nineteenNinetySix.line());
+        assertIntEquals(15, nineteenNinetySix.column());
 
-    //     token = lexer.nextToken();
-    //     Assert.assertTrue("{", token.kind() == kinds.L_BRACE);
-    //     Assert.assertTrue("{[text]", token.text().equals((Object) "{"));
-    //     Assert.assertTrue("{[line]", token.line() == 1);
-    //     Assert.assertTrue("{[column]", token.column() == 21);
+        Token eleven = lexer.nextToken();
+        assertByteEquals(constants.INTEGER_LITERAL, eleven.kind());
+        assertStringEquals("11", eleven.text());
+        assertIntEquals(2, eleven.line());
+        assertIntEquals(0, eleven.column());
 
-    //     token = lexer.nextToken();
-    //     Assert.assertTrue("}", token.kind() == kinds.R_BRACE);
-    //     Assert.assertTrue("}[text]", token.text().equals((Object) "}"));
-    //     Assert.assertTrue("}[line]", token.line() == 1);
-    //     Assert.assertTrue("}[column]", token.column() == 22);
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
+    }
 
-    //     token = lexer.nextToken();
-    //     Assert.assertTrue("<eot>", token.kind() == kinds.EOT);
-    // }
+    public void testMinimal() throws Exception {
+        String input = "public\nclass\nMinimal {}";
+        Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+        Token _public = lexer.nextToken();
+        assertByteEquals(constants.PUBLIC, _public.kind());
+        assertStringEquals("public", _public.text());
+        assertIntEquals(1, _public.line());
+        assertIntEquals(0, _public.column());
+
+        Token _class = lexer.nextToken();
+        assertByteEquals(constants.CLASS, _class.kind());
+        assertStringEquals("class", _class.text());
+        assertIntEquals(2, _class.line());
+        assertIntEquals(0, _class.column());
+
+        Token minimal = lexer.nextToken();
+        assertByteEquals(constants.IDENTIFIER, minimal.kind());
+        assertStringEquals("Minimal", minimal.text());
+        assertIntEquals(3, minimal.line());
+        assertIntEquals(0, minimal.column());
+
+        Token lbrace = lexer.nextToken();
+        assertByteEquals(constants.L_BRACE, lbrace.kind());
+        assertStringEquals("{", lbrace.text());
+        assertIntEquals(3, lbrace.line());
+        assertIntEquals(8, lbrace.column());
+
+        Token rbrace = lexer.nextToken();
+        assertByteEquals(constants.R_BRACE, rbrace.kind());
+        assertStringEquals("}", rbrace.text());
+        assertIntEquals(3, rbrace.line());
+        assertIntEquals(9, rbrace.column());
+
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
+    }
 }

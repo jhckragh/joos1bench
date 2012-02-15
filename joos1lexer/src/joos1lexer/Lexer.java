@@ -62,6 +62,22 @@ public final class Lexer {
             return new Token(constants.IDENTIFIER, sb.toString(), line, column);
         }
 
+        // Integer literals
+        if (currentChar == '0') {
+            takeIt();
+            return new Token(constants.INTEGER_LITERAL, "0", line, column);
+        }
+        if (Character.isDigit((char) currentChar)) {
+            StringBuffer sb = new StringBuffer();
+            sb.append((char) currentChar);
+            takeIt();
+            while (Character.isDigit((char) currentChar)) {
+                sb.append((char) currentChar);
+                takeIt();
+            }
+            return new Token(constants.INTEGER_LITERAL, sb.toString(), line, column);
+        }
+
         // Delimiters
         if (currentChar == '{') {
             takeIt();
@@ -194,7 +210,7 @@ public final class Lexer {
         columnNumber = columnNumber + 1;
         if (currentChar == '\n') {
             lineNumber = lineNumber + 1;
-            columnNumber = 0;
+            columnNumber = -1;
         }
     }
 

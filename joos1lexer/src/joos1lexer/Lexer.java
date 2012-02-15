@@ -67,11 +67,11 @@ public final class Lexer {
             takeIt();
             return new Token(constants.INTEGER_LITERAL, "0", line, column);
         }
-        if (Character.isDigit((char) currentChar)) {
+        if (isDigit((char) currentChar)) {
             StringBuffer sb = new StringBuffer();
             sb.append((char) currentChar);
             takeIt();
-            while (Character.isDigit((char) currentChar)) {
+            while (isDigit((char) currentChar)) {
                 sb.append((char) currentChar);
                 takeIt();
             }
@@ -268,5 +268,9 @@ public final class Lexer {
         map.put((Object) "false", (Object) new Byte(constants.FALSE));
         map.put((Object) "null", (Object) new Byte(constants.NULL));
         return map;
+    }
+
+    protected boolean isDigit(char c) {
+        return c >= '0' && c <= '9';
     }
 }

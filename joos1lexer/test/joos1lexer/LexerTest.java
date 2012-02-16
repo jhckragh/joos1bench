@@ -709,4 +709,84 @@ public class LexerTest extends TestCase {
 
         assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
+
+    public void testSimpleEscapeSequenceCharacterLiterals() throws Exception {
+        String input = "'\\t' '\\b' '\\n' '\\f' '\\r' '\\\"' '\\'' '\\\\'";
+        Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+        Token tab = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, tab.kind());
+        assertStringEquals("'\\t'", tab.text());
+        assertIntEquals(1, tab.line());
+        assertIntEquals(0, tab.column());
+
+        Token backspace = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, backspace.kind());
+        assertStringEquals("'\\b'", backspace.text());
+        assertIntEquals(1, backspace.line());
+        assertIntEquals(5, backspace.column());
+
+        Token linefeed = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, linefeed.kind());
+        assertStringEquals("'\\n'", linefeed.text());
+        assertIntEquals(1, linefeed.line());
+        assertIntEquals(10, linefeed.column());
+
+        Token formfeed = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, formfeed.kind());
+        assertStringEquals("'\\f'", formfeed.text());
+        assertIntEquals(1, formfeed.line());
+        assertIntEquals(15, formfeed.column());
+
+        Token cr = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, cr.kind());
+        assertStringEquals("'\\r'", cr.text());
+        assertIntEquals(1, cr.line());
+        assertIntEquals(20, cr.column());
+
+        Token doubleQuote = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, doubleQuote.kind());
+        assertStringEquals("'\\\"'", doubleQuote.text());
+        assertIntEquals(1, doubleQuote.line());
+        assertIntEquals(25, doubleQuote.column());
+
+        Token singleQuote = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, singleQuote.kind());
+        assertStringEquals("'\\''", singleQuote.text());
+        assertIntEquals(1, singleQuote.line());
+        assertIntEquals(30, singleQuote.column());
+
+        Token backslash = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, backslash.kind());
+        assertStringEquals("'\\\\'", backslash.text());
+        assertIntEquals(1, backslash.line());
+        assertIntEquals(35, backslash.column());        
+
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
+    }
+
+    public void testOctalEscapeSequenceCharacterLiterals() throws Exception {
+        String input = "'\\177' '\\0' '\\45'";
+        Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+        Token oneSevenSeven = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, oneSevenSeven.kind());
+        assertStringEquals("'\\177'", oneSevenSeven.text());
+        assertIntEquals(1, oneSevenSeven.line());
+        assertIntEquals(0, oneSevenSeven.column());
+
+        Token zero = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, zero.kind());
+        assertStringEquals("'\\0'", zero.text());
+        assertIntEquals(1, zero.line());
+        assertIntEquals(7, zero.column());
+
+        Token fourFive = lexer.nextToken();
+        assertByteEquals(constants.CHAR_LITERAL, fourFive.kind());
+        assertStringEquals("'\\45'", fourFive.text());
+        assertIntEquals(1, fourFive.line());
+        assertIntEquals(12, fourFive.column());
+
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
+    }
 }

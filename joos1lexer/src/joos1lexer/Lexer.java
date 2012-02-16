@@ -75,21 +75,55 @@ public final class Lexer {
                 sb.append((char) currentChar);
                 takeIt();
             }
-            return new Token(constants.INTEGER_LITERAL, sb.toString(), line, column);
+            return new Token(constants.INTEGER_LITERAL, sb.toString(),
+                             line, column);
         }
 
         // Character literals
         if (currentChar == '\'') {
             takeIt();
-            if (currentChar >= '\000' && currentChar <= '\255') {
+            if (currentChar < '\000' || currentChar > '\255' ||
+                currentChar == '\r' || currentChar == '\n' ||
+                currentChar == '\'')
+                return new Token(constants.ERROR, "<error>", line, column);
+
+            if (currentChar == '\\') {
+                takeIt();
+                if (isOctalDigit((char) currentChar)) {
+                    int maxLen = 2;
+                    if (currentChar >= '0' && currentChar <= '3')
+                        maxLen = 3;
+                    StringBuffer sb = new StringBuffer();
+                    while (maxLen > 0 && isOctalDigit((char) currentChar)) {
+                        sb.append((char) currentChar);
+                        takeIt();
+                        maxLen = maxLen - 1;
+                    }
+                    if (currentChar != '\'')
+                        return new Token(constants.ERROR, "<error>", line, column);
+                    takeIt();
+                    return new Token(constants.CHAR_LITERAL,
+                                     "'\\" + sb.toString() + "'", line, column);
+                } else {
+                    char c = (char) currentChar;
+                    takeIt();
+                    if ((c != 'b' && c != 't' && c != 'n' && c != 'f' &&
+                         c != 'r' && c != '"' && c != '\'' && c != '\\') ||
+                        currentChar != '\'')
+                        return new Token(constants.ERROR, "<error>",
+                                         line, column);
+                    takeIt();
+                    return new Token(constants.CHAR_LITERAL, "'\\" + c + "'",
+                                     line, column);
+                }
+            } else {
                 char c = (char) currentChar;
                 takeIt();
-                if (c == '\r' || c == '\n' || c == '\\' || currentChar != '\'')
+                if (currentChar != '\'')
                     return new Token(constants.ERROR, "<error>", line, column);
                 takeIt();
-                return new Token(constants.CHAR_LITERAL, "'" + c + "'", line, column);
-            } else {
-                return new Token(constants.ERROR, "<error>", line, column);
+                return new Token(constants.CHAR_LITERAL, "'" + c + "'",
+                                 line, column);
             }
         }
 
@@ -287,5 +321,9 @@ public final class Lexer {
 
     protected boolean isDigit(char c) {
         return c >= '0' && c <= '9';
+    }
+
+    protected boolean isOctalDigit(char c) {
+        return c >= '0' && c <= '7';
     }
 }

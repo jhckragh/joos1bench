@@ -789,4 +789,29 @@ public class LexerTest extends TestCase {
 
         assertByteEquals(constants.EOT, lexer.nextToken().kind());
     }
+
+    public void testSimpleStringLiterals() throws Exception {
+        String input = "\"\" \"\\\"\" \"This is a string\"";
+        Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+        Token empty = lexer.nextToken();
+        assertByteEquals(constants.STRING_LITERAL, empty.kind());
+        assertStringEquals("\"\"", empty.text());
+        assertIntEquals(1, empty.line());
+        assertIntEquals(0, empty.column());
+
+        Token doubleQuote = lexer.nextToken();
+        assertByteEquals(constants.STRING_LITERAL, doubleQuote.kind());
+        assertStringEquals("\"\\\"\"", doubleQuote.text());
+        assertIntEquals(1, doubleQuote.line());
+        assertIntEquals(3, doubleQuote.column());
+
+        Token str = lexer.nextToken();
+        assertByteEquals(constants.STRING_LITERAL, str.kind());
+        assertStringEquals("\"This is a string\"", str.text());
+        assertIntEquals(1, str.line());
+        assertIntEquals(8, str.column());
+
+        assertByteEquals(constants.EOT, lexer.nextToken().kind());
+    }
 }

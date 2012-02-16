@@ -88,34 +88,12 @@ public final class Lexer {
                 return new Token(constants.ERROR, "<error>", line, column);
 
             if (currentChar == '\\') {
+                String escapeSequence = scanEscapeSequence();
+                if (escapeSequence.length() == 0 || currentChar != '\'')
+                    return new Token(constants.ERROR, "<error>", line, column);
                 takeIt();
-                if (isOctalDigit((char) currentChar)) {
-                    int maxLen = 2;
-                    if (currentChar >= '0' && currentChar <= '3')
-                        maxLen = 3;
-                    StringBuffer sb = new StringBuffer();
-                    while (maxLen > 0 && isOctalDigit((char) currentChar)) {
-                        sb.append((char) currentChar);
-                        takeIt();
-                        maxLen = maxLen - 1;
-                    }
-                    if (currentChar != '\'')
-                        return new Token(constants.ERROR, "<error>", line, column);
-                    takeIt();
-                    return new Token(constants.CHAR_LITERAL,
-                                     "'\\" + sb.toString() + "'", line, column);
-                } else {
-                    char c = (char) currentChar;
-                    takeIt();
-                    if ((c != 'b' && c != 't' && c != 'n' && c != 'f' &&
-                         c != 'r' && c != '"' && c != '\'' && c != '\\') ||
-                        currentChar != '\'')
-                        return new Token(constants.ERROR, "<error>",
-                                         line, column);
-                    takeIt();
-                    return new Token(constants.CHAR_LITERAL, "'\\" + c + "'",
-                                     line, column);
-                }
+                return new Token(constants.CHAR_LITERAL,
+                                 "'" + escapeSequence + "'", line, column);
             } else {
                 char c = (char) currentChar;
                 takeIt();
@@ -252,6 +230,32 @@ public final class Lexer {
         }
 
         return new Token(constants.ERROR, "<error>", line, column);
+    }
+
+    protected String scanEscapeSequence() throws IOException {
+        if (currentChar != '\\')
+            return "";
+        takeIt();
+
+        if (isOctalDigit((char) currentChar)) {
+            int maxLen = 2;
+            if (currentChar >= '0' && currentChar <= '3')
+                maxLen = 3;
+            StringBuffer sb = new StringBuffer();
+            while (maxLen > 0 && isOctalDigit((char) currentChar)) {
+                sb.append((char) currentChar);
+                takeIt();
+                maxLen = maxLen - 1;
+            }
+            return "\\" + sb.toString();
+        } else {
+            char c = (char) currentChar;
+            takeIt();
+            if (c == 'b' || c == 't' || c == 'n' || c == 'f' ||
+                c == 'r' || c == '"' || c == '\'' || c == '\\')
+                return "\\" + c;
+            return "";
+        }
     }
 
     protected void takeIt() throws IOException {

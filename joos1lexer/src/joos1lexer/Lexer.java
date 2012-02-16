@@ -105,6 +105,35 @@ public final class Lexer {
             }
         }
 
+        // String literals
+        if (currentChar == '"') {
+            takeIt();
+            if (currentChar == '\\') {
+                String escapeSequence = scanEscapeSequence();
+                if (escapeSequence.length() == 0 || currentChar != '"')
+                    return new Token(constants.ERROR, "<error>", line, column);
+                takeIt();
+                return new Token(constants.STRING_LITERAL,
+                                 '"' + escapeSequence + '"', line, column);
+            } else {
+                StringBuffer sb = new StringBuffer();
+                while (currentChar != '"' && currentChar != -1) {
+                    if (currentChar < '\000' || currentChar > '\255' ||
+                        currentChar == '\r' || currentChar == '\n')
+                        return new Token(constants.ERROR, "<error>",
+                                         line, column);
+
+                    sb.append((char) currentChar);
+                    takeIt();
+                }
+                if (currentChar != '"')
+                    return new Token(constants.ERROR, "<error>", line, column);
+                takeIt();
+                return new Token(constants.STRING_LITERAL,
+                                 '"' + sb.toString() + '"', line, column);
+            }
+        }
+
         // Delimiters
         if (currentChar == '{') {
             takeIt();

@@ -1003,4 +1003,116 @@ public class LexerTest extends TestCase {
 
     assertByteEquals(constants.EOT, lexer.nextToken().kind());
   }
+
+  public void testValidProgram() throws Exception {
+    String input = "public class Foo{\n" +
+      "    protected int x = 42;\n\n" +
+      "    public Foo() {}\n" +
+      "}";
+    Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+    Token _public = lexer.nextToken();
+    assertByteEquals(constants.PUBLIC, _public.kind());
+    assertStringEquals("public", _public.text());
+    assertIntEquals(1, _public.line());
+    assertIntEquals(0, _public.column());
+
+    Token _class = lexer.nextToken();
+    assertByteEquals(constants.CLASS, _class.kind());
+    assertStringEquals("class", _class.text());
+    assertIntEquals(1, _class.line());
+    assertIntEquals(7, _class.column());    
+
+    Token id = lexer.nextToken();
+    assertByteEquals(constants.IDENTIFIER, id.kind());
+    assertStringEquals("Foo", id.text());
+    assertIntEquals(1, id.line());
+    assertIntEquals(13, id.column());
+
+    Token lbrace = lexer.nextToken();
+    assertByteEquals(constants.L_BRACE, lbrace.kind());
+    assertStringEquals("{", lbrace.text());
+    assertIntEquals(1, lbrace.line());
+    assertIntEquals(16, lbrace.column());
+
+    Token _protected = lexer.nextToken();
+    assertByteEquals(constants.PROTECTED, _protected.kind());
+    assertStringEquals("protected", _protected.text());
+    assertIntEquals(2, _protected.line());
+    assertIntEquals(4, _protected.column());
+
+    Token _int = lexer.nextToken();
+    assertByteEquals(constants.INT, _int.kind());
+    assertStringEquals("int", _int.text());
+    assertIntEquals(2, _int.line());
+    assertIntEquals(14, _int.column());
+
+    id = lexer.nextToken();
+    assertByteEquals(constants.IDENTIFIER, id.kind());
+    assertStringEquals("x", id.text());
+    assertIntEquals(2, id.line());
+    assertIntEquals(18, id.column());
+
+    Token assign = lexer.nextToken();
+    assertByteEquals(constants.ASSIGN, assign.kind());
+    assertStringEquals("=", assign.text());
+    assertIntEquals(2, assign.line());
+    assertIntEquals(20, assign.column());
+
+    Token fortyTwo = lexer.nextToken();
+    assertByteEquals(constants.INTEGER_LITERAL, fortyTwo.kind());
+    assertStringEquals("42", fortyTwo.text());
+    assertIntEquals(2, fortyTwo.line());
+    assertIntEquals(22, fortyTwo.column());
+
+    Token semi = lexer.nextToken();
+    assertByteEquals(constants.SEMICOLON, semi.kind());
+    assertStringEquals(";", semi.text());
+    assertIntEquals(2, semi.line());
+    assertIntEquals(24, semi.column());
+
+    _public = lexer.nextToken();
+    assertByteEquals(constants.PUBLIC, _public.kind());
+    assertStringEquals("public", _public.text());
+    assertIntEquals(4, _public.line());
+    assertIntEquals(4, _public.column());
+
+    id = lexer.nextToken();
+    assertByteEquals(constants.IDENTIFIER, id.kind());
+    assertStringEquals("Foo", id.text());
+    assertIntEquals(4, id.line());
+    assertIntEquals(11, id.column());
+
+    Token lparen = lexer.nextToken();
+    assertByteEquals(constants.L_PAREN, lparen.kind());
+    assertStringEquals("(", lparen.text());
+    assertIntEquals(4, lparen.line());
+    assertIntEquals(14, lparen.column());
+
+    Token rparen = lexer.nextToken();
+    assertByteEquals(constants.R_PAREN, rparen.kind());
+    assertStringEquals(")", rparen.text());
+    assertIntEquals(4, rparen.line());
+    assertIntEquals(15, rparen.column());
+
+    lbrace = lexer.nextToken();
+    assertByteEquals(constants.L_BRACE, lbrace.kind());
+    assertStringEquals("{", lbrace.text());
+    assertIntEquals(4, lbrace.line());
+    assertIntEquals(17, lbrace.column());
+
+    Token rbrace = lexer.nextToken();
+    assertByteEquals(constants.R_BRACE, rbrace.kind());
+    assertStringEquals("}", rbrace.text());
+    assertIntEquals(4, rbrace.line());
+    assertIntEquals(18, rbrace.column());
+
+    rbrace = lexer.nextToken();
+    assertByteEquals(constants.R_BRACE, rbrace.kind());
+    assertStringEquals("}", rbrace.text());
+    assertIntEquals(5, rbrace.line());
+    assertIntEquals(0, rbrace.column());
+
+    assertByteEquals(constants.EOT, lexer.nextToken().kind());
+  }
 }

@@ -895,4 +895,112 @@ public class LexerTest extends TestCase {
 
     assertByteEquals(constants.EOT, lexer.nextToken().kind());
   }
+
+  public void testEndOfLineComments() throws Exception {
+    String input = "//\npublic class // xyz //Foo\n    Foo {\n" +
+      "///////////////// hello\n1 / 2 //";
+    Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+    Token _public = lexer.nextToken();
+    assertByteEquals(constants.PUBLIC, _public.kind());
+    assertStringEquals("public", _public.text());
+    assertIntEquals(2, _public.line());
+    assertIntEquals(0, _public.column());
+
+    Token _class = lexer.nextToken();
+    assertByteEquals(constants.CLASS, _class.kind());
+    assertStringEquals("class", _class.text());
+    assertIntEquals(2, _class.line());
+    assertIntEquals(7, _class.column());
+
+    Token id = lexer.nextToken();
+    assertByteEquals(constants.IDENTIFIER, id.kind());
+    assertStringEquals("Foo", id.text());
+    assertIntEquals(3, id.line());
+    assertIntEquals(4, id.column());
+
+    Token lbrace = lexer.nextToken();
+    assertByteEquals(constants.L_BRACE, lbrace.kind());
+    assertStringEquals("{", lbrace.text());
+    assertIntEquals(3, lbrace.line());
+    assertIntEquals(8, lbrace.column());
+
+    Token one = lexer.nextToken();
+    assertByteEquals(constants.INTEGER_LITERAL, one.kind());
+    assertStringEquals("1", one.text());
+    assertIntEquals(5, one.line());
+    assertIntEquals(0, one.column());
+
+    Token div = lexer.nextToken();
+    assertByteEquals(constants.DIV, div.kind());
+    assertStringEquals("/", div.text());
+    assertIntEquals(5, div.line());
+    assertIntEquals(2, div.column());
+
+    Token two = lexer.nextToken();
+    assertByteEquals(constants.INTEGER_LITERAL, two.kind());
+    assertStringEquals("2", two.text());
+    assertIntEquals(5, two.line());
+    assertIntEquals(4, two.column());
+
+    assertByteEquals(constants.EOT, lexer.nextToken().kind());
+  }
+
+  public void testTraditionalComments() throws Exception {
+    String input = "/**/x/* x *//*\nhello\n*/int y/**world**/ww";
+    Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+    Token x = lexer.nextToken();
+    assertByteEquals(constants.IDENTIFIER, x.kind());
+    assertStringEquals("x", x.text());
+    assertIntEquals(1, x.line());
+    assertIntEquals(4, x.column());
+
+    Token _int = lexer.nextToken();
+    assertByteEquals(constants.INT, _int.kind());
+    assertStringEquals("int", _int.text());
+    assertIntEquals(3, _int.line());
+    assertIntEquals(2, _int.column());    
+
+    Token y = lexer.nextToken();
+    assertByteEquals(constants.IDENTIFIER, y.kind());
+    assertStringEquals("y", y.text());
+    assertIntEquals(3, y.line());
+    assertIntEquals(6, y.column());
+
+    Token ww = lexer.nextToken();
+    assertByteEquals(constants.IDENTIFIER, ww.kind());
+    assertStringEquals("ww", ww.text());
+    assertIntEquals(3, ww.line());
+    assertIntEquals(18, ww.column());
+
+    assertByteEquals(constants.EOT, lexer.nextToken().kind());
+  }
+
+  public void testUnclosedTraditionalComment() throws Exception {
+    String input = "/*";
+    Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+    Token error = lexer.nextToken();
+    assertByteEquals(constants.ERROR, error.kind());
+    assertIntEquals(1, error.line());
+    assertIntEquals(0, error.column());
+  }
+
+  public void testMalformedTraditionalComment() throws Exception {
+    String input = "/*/";
+    Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+    Token error = lexer.nextToken();
+    assertByteEquals(constants.ERROR, error.kind());
+    assertIntEquals(1, error.line());
+    assertIntEquals(0, error.column());    
+  }
+
+  public void testFakeTraditionalComment() throws Exception {
+    String input = "// /* unclosed?";
+    Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+    assertByteEquals(constants.EOT, lexer.nextToken().kind());
+  }
 }

@@ -31,8 +31,32 @@ public final class Lexer {
       takeIt();
 
     while (currentChar == ' ' || currentChar == '\t' || currentChar == '\f' ||
-           currentChar == '\r' || currentChar == '\n')
-      takeIt();
+           currentChar == '\r' || currentChar == '\n' || currentChar == '/') {
+      if (currentChar == '/') {
+        int line = lineNumber;
+        int column = columnNumber;
+        takeIt();
+        if (currentChar == '/') {
+          takeIt();
+          while (currentChar != '\n' && currentChar != -1)
+            takeIt();
+        } else if (currentChar == '*') {
+          takeIt();
+          boolean justSeenStar = false;
+          while (!(justSeenStar && currentChar == '/') && currentChar != -1) {
+            justSeenStar = (currentChar == '*');
+            takeIt();
+          }
+          if (currentChar == -1)
+            return new Token(constants.ERROR, "<error>", line, column);
+          takeIt();
+        } else {
+          return new Token(constants.DIV, "/", line, column);
+        }
+      } else {
+        takeIt();
+      }
+    }
 
     return scanToken();
   }

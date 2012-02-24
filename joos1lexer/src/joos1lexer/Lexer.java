@@ -285,10 +285,6 @@ public final class Lexer {
     return err("invalid character: " + (char) currentChar, line, column);
   }
 
-  protected Token err(String msg, int line, int column) {
-    return new Token(constants.ERROR, msg, line, column);
-  }
-
   protected String scanEscapeSequence() throws IOException {
     if (currentChar != '\\')
       return "";
@@ -322,6 +318,18 @@ public final class Lexer {
       lineNumber = lineNumber + 1;
       columnNumber = -1;
     }
+  }
+
+  protected boolean isDigit(char c) {
+    return c >= '0' && c <= '9';
+  }
+
+  protected boolean isOctalDigit(char c) {
+    return c >= '0' && c <= '7';
+  }
+
+  protected Token err(String msg, int line, int column) {
+    return new Token(constants.ERROR, msg, line, column);
   }
 
   protected Map createKeywordMap(TokenConstants constants) {
@@ -378,13 +386,5 @@ public final class Lexer {
     map.put((Object) "false", (Object) new Byte(constants.FALSE));
     map.put((Object) "null", (Object) new Byte(constants.NULL));
     return map;
-  }
-
-  protected boolean isDigit(char c) {
-    return c >= '0' && c <= '9';
-  }
-
-  protected boolean isOctalDigit(char c) {
-    return c >= '0' && c <= '7';
   }
 }

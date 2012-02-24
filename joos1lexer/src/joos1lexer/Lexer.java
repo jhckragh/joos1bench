@@ -48,7 +48,7 @@ public final class Lexer {
             takeIt();
           }
           if (currentChar == -1)
-            return new Token(constants.ERROR, "<error>", line, column);
+            return err("unclosed comment", line, column);
           takeIt();
         } else {
           return new Token(constants.DIV, "/", line, column);
@@ -102,26 +102,32 @@ public final class Lexer {
     // Character literals
     if (currentChar == '\'') {
       takeIt();
-      if (currentChar < '\000' || currentChar > '\255' ||
-          currentChar == '\r' || currentChar == '\n' ||
-          currentChar == '\'')
-        return new Token(constants.ERROR, "<error>", line, column);
+      
+      if (currentChar < '\000' || currentChar > '\255')
+        return err("character outside of range [\\000-\\255]", line, column);
 
+      if (currentChar == '\r' || currentChar == '\n')
+        return err("line end in character literal", line, column);
+
+      if (currentChar == '\'')
+        return err("empty character literal", line, column);
+
+      Token res = null;
       if (currentChar == '\\') {
         String escapeSequence = scanEscapeSequence();
-        if (escapeSequence.length() == 0 || currentChar != '\'')
-          return new Token(constants.ERROR, "<error>", line, column);
-        takeIt();
-        return new Token(constants.CHAR_LITERAL,
-                         "'" + escapeSequence + "'", line, column);
+        if (escapeSequence.length() == 0)
+          return err("invalid escape sequence", line, column);
+        res = new Token(constants.CHAR_LITERAL,
+                        "'" + escapeSequence + "'", line, column);
       } else {
         char c = (char) currentChar;
         takeIt();
-        if (currentChar != '\'')
-          return new Token(constants.ERROR, "<error>", line, column);
-        takeIt();
-        return new Token(constants.CHAR_LITERAL, "'" + c + "'", line, column);
+        res = new Token(constants.CHAR_LITERAL, "'" + c + "'", line, column);
       }
+      if (currentChar != '\'')
+        return err("unclosed char literal", line, column);
+      takeIt();
+      return res;
     }
 
     // String literals
@@ -137,14 +143,18 @@ public final class Lexer {
       } else {
         StringBuffer sb = new StringBuffer();
         while (currentChar != '"' && currentChar != -1) {
-          if (currentChar < '\000' || currentChar > '\255' ||
-              currentChar == '\r' || currentChar == '\n')
-            return new Token(constants.ERROR, "<error>", line, column);
+          if (currentChar < '\000' || currentChar > '\255')
+            return err("character outside of range [\\000-\\255]",
+                       line, column);
+
+          if (currentChar == '\r' || currentChar == '\n')
+            return err("line end in string literal", line, column);
+
           sb.append((char) currentChar);
           takeIt();
         }
         if (currentChar != '"')
-          return new Token(constants.ERROR, "<error>", line, column);
+          return err("unclosed string literal", line, column);
         takeIt();
         return new Token(constants.STRING_LITERAL, '"' + sb.toString() + '"',
                          line, column);
@@ -275,7 +285,11 @@ public final class Lexer {
       return new Token(constants.MOD, "%", line, column);
     }
 
-    return new Token(constants.ERROR, "<error>", line, column);
+    return err("invalid character: " + (char) currentChar, line, column);
+  }
+
+  protected Token err(String msg, int line, int column) {
+    return new Token(constants.ERROR, msg, line, column);
   }
 
   protected String scanEscapeSequence() throws IOException {

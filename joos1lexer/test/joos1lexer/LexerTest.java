@@ -896,6 +896,22 @@ public class LexerTest extends TestCase {
     assertByteEquals(constants.EOT, lexer.nextToken().kind());
   }
 
+  public void testMixedSimpleAndEscapeStringLiterals() throws Exception {
+    String input = "\"\\tfoo\" \"foo\\h52bar\"";
+    Lexer lexer = new Lexer((Reader) new StringReader(input));
+
+    Token tabFoo = lexer.nextToken();
+    assertByteEquals(constants.STRING_LITERAL, tabFoo.kind());
+    assertStringEquals("\"\\tfoo\"", tabFoo.text());
+    assertIntEquals(1, tabFoo.line());
+    assertIntEquals(0, tabFoo.column());
+
+    Token error = lexer.nextToken();
+    assertByteEquals(constants.ERROR, error.kind());
+    assertIntEquals(1, error.line());
+    assertIntEquals(8, error.column());
+  }
+
   public void testEndOfLineComments() throws Exception {
     String input = "//\npublic class // xyz //Foo\n    Foo {\n" +
       "///////////////// hello\n1 / 2 //";

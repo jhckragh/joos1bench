@@ -3,13 +3,20 @@
 
   <property name="joosc" value="joos" />
 
+  <property name="project.name" value="${ant.project.name}" />
+  <property name="project.version" value="0.0.1" />
+
+
   <property name="src.dir" location="src/joos1lexer" />
   <property name="lib.dir" location="lib" />
+  <property name="dist.dir" location="dist" />
   <property name="build.dir" location="build" />
   <property name="build.classes.dir" location="${build.dir}/classes" />
   <property name="test.dir" location="${build.dir}/test" />
   <property name="test.src.dir" location="test/joos1lexer" />
   <property name="test.classes.dir" location="${test.dir}/classes" />
+
+  <property name="target.name" value="${project.name}-${project.version}.jar" />
 
   <path id="test.compile.classpath">
     <pathelement location="${lib.dir}/junit-3.8.2.jar" />
@@ -27,6 +34,7 @@
 
   <target name="clean">
     <delete dir="${build.dir}" />
+    <delete dir="${dist.dir}" />
   </target>
 
   <target name="compile" depends="init">
@@ -83,6 +91,14 @@
       <formatter type="brief" usefile="false" />
       <test name="joos1lexer.LexerTest" />
     </junit>
+  </target>
+
+  <target name="jar" depends="compile">
+    <jar destfile="${dist.dir}/${target.name}"
+         duplicate="fail"
+         compress="false">
+      <fileset dir="${build.classes.dir}" />
+    </jar>
   </target>
 
 </project>

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <project name="joos1lexer" default="compile">
 
-  <property name="joosc" value="camljoos2" />
+  <property name="joosc" value="joos" />
 
   <property name="src.dir" location="src/joos1lexer" />
   <property name="lib.dir" location="lib" />

@@ -96,4 +96,179 @@ public final class TokenConstants {
   public byte ERROR           = (byte) 85;
 
   public TokenConstants() {}
+
+  public String spell(byte t) {
+    if (t == EOT)
+      return "<eot>";
+    if (t == ABSTRACT)
+      return "abstract";
+    if (t == BOOLEAN)
+      return "boolean";
+    if (t == BREAK)
+      return "break";
+    if (t == BYTE)
+      return "byte";
+    if (t == CASE)
+      return "case";
+    if (t == CATCH)
+      return "catch";
+    if (t == CHAR)
+      return "char";
+    if (t == CLASS)
+      return "class";
+    if (t == CONST)
+      return "const";
+    if (t == CONTINUE)
+      return "continue";
+    if (t == DEFAULT)
+      return "default";
+    if (t == DO)
+      return "do";
+    if (t == DOUBLE)
+      return "double";
+    if (t == ELSE)
+      return "else";
+    if (t == EXTENDS)
+      return "extends";
+    if (t == FINAL)
+      return "final";
+    if (t == FINALLY)
+      return "finally";
+    if (t == FLOAT)
+      return "float";
+    if (t == FOR)
+      return "for";
+    if (t == GOTO)
+      return "goto";
+    if (t == IF)
+      return "if";
+    if (t == IMPLEMENTS)
+      return "implements";
+    if (t == IMPORT)
+      return "import";
+    if (t == INSTANCEOF)
+      return "instanceof";
+    if (t == INT)
+      return "int";
+    if (t == INTERFACE)
+      return "interface";
+    if (t == LONG)
+      return "long";
+    if (t == NATIVE)
+      return "native";
+    if (t == NEW)
+      return "new";
+    if (t == PACKAGE)
+      return "package";
+    if (t == PRIVATE)
+      return "private";
+    if (t == PROTECTED)
+      return "protected";
+    if (t == PUBLIC)
+      return "public";
+    if (t == RETURN)
+      return "return";
+    if (t == SHORT)
+      return "short";
+    if (t == STATIC)
+      return "static";
+    if (t == STRICTFP)
+      return "strictfp";
+    if (t == SUPER)
+      return "super";
+    if (t == SWITCH)
+      return "switch";
+    if (t == SYNCHRONIZED)
+      return "synchronized";
+    if (t == THIS)
+      return "this";
+    if (t == THROW)
+      return "throw";
+    if (t == THROWS)
+      return "throws";
+    if (t == TRANSIENT)
+      return "transient";
+    if (t == TRY)
+      return "try";
+    if (t == VOID)
+      return "void";
+    if (t == VOLATILE)
+      return "volatile";
+    if (t == WHILE)
+      return "while";
+    if (t == TRUE)
+      return "true";
+    if (t == FALSE)
+      return "false";
+    if (t == NULL)
+      return "null";
+    if (t == L_PAREN)
+      return "(";
+    if (t == R_PAREN)
+      return ")";
+    if (t == L_BRACE)
+      return "{";
+    if (t == R_BRACE)
+      return "}";
+    if (t == L_BRACKET)
+      return "[";
+    if (t == R_BRACKET)
+      return "]";
+    if (t == SEMICOLON)
+      return ";";
+    if (t == COMMA)
+      return ",";
+    if (t == DOT)
+      return ".";
+    if (t == ASSIGN)
+      return "=";
+    if (t == COMPLEMENT)
+      return "!";
+    if (t == AND_AND)
+      return "&&";
+    if (t == OR_OR)
+      return "||";
+    if (t == LT)
+      return "<";
+    if (t == GT)
+      return ">";
+    if (t == EQ)
+      return "==";
+    if (t == LTEQ)
+      return "<=";
+    if (t == GTEQ)
+      return ">=";
+    if (t == NEQ)
+      return "!=";
+    if (t == PLUS)
+      return "+";
+    if (t == MINUS)
+      return "-";
+    if (t == STAR)
+      return "*";
+    if (t == DIV)
+      return "/";
+    if (t == AND)
+      return "&";
+    if (t == OR)
+      return "|";
+    if (t == XOR)
+      return "^";
+    if (t == MOD)
+      return "%";
+    if (t == PLUS_PLUS)
+      return "++";
+    if (t == MINUS_MINUS)
+      return "--";
+    if (t == INTEGER_LITERAL)
+      return "INTEGER_LITERAL";
+    if (t == CHAR_LITERAL)
+      return "CHAR_LITERAL";
+    if (t == STRING_LITERAL)
+      return "STRING_LITERAL";
+    if (t == IDENTIFIER)
+      return "IDENTIFIER";
+
+    return "INTERNAL ERROR OCCURRED";
+  }
 }

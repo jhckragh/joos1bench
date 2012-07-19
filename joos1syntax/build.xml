@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<project name="joos1syntax" default="compile">
+
+  <property name="joosc" value="joos" />
+
+  <property name="project.name" value="${ant.project.name}" />
+  <property name="project.version" value="0.0.1" />
+
+
+  <property name="src.dir" location="src/${project.name}" />
+  <property name="lib.dir" location="lib" />
+  <property name="dist.dir" location="dist" />
+  <property name="build.dir" location="build" />
+  <property name="build.classes.dir" location="${build.dir}/classes" />
+
+  <property name="target.name" value="${project.name}-${project.version}.jar" />
+
+  <path id="compile.classpath">
+    <pathelement location="${lib.dir}/joos1lexer-0.0.1.jar" />
+  </path>
+
+  <target name="init">
+    <mkdir dir="${build.classes.dir}" />
+  </target>
+
+  <target name="clean">
+    <delete dir="${build.dir}" />
+    <delete dir="${dist.dir}" />
+  </target>
+
+  <target name="compile" depends="init">
+    <apply executable="${joosc}" parallel="true" failonerror="true">
+      <arg value="-joos1" />
+      <arg value="-cp" />
+      <arg pathref="compile.classpath" />
+      <fileset dir="${src.dir}" includes="*.java" />
+    </apply>
+    <replaceregexp byline="true">
+      <regexp pattern='\.field ([a-z]+) "([a-zA-Z0-9_$]+)"' />
+      <substitution expression=".field \1 \2" />
+      <fileset dir="${src.dir}">
+        <include name="*.j" />
+      </fileset>
+    </replaceregexp>
+    <apply executable="jasmin" parallel="true" verbose="true">
+      <arg value="-d" />
+      <arg value="${build.classes.dir}" />
+      <fileset dir="${src.dir}" includes="*.j" />
+    </apply>
+    <delete>
+      <fileset dir="${src.dir}" includes="*.j" />
+    </delete>
+  </target>
+
+  <target name="jar" depends="compile">
+    <jar destfile="${dist.dir}/${target.name}"
+         duplicate="fail"
+         compress="false">
+      <fileset dir="${build.classes.dir}" />
+    </jar>
+  </target>
+
+</project>

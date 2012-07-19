@@ -1,0 +1,131 @@
+Program = [ PackageDeclaration ] { ImportDeclaration } ClassDeclaration .
+
+PackageDeclaration = "package" Name ";" .
+
+ImportDeclaration = "import" Name "." ( Identifier | "*" ) ";" .
+
+ClassDeclaration = "public" [ "final" ] [ "abstract" ] "class" Identifier
+                   [ ExtendsDeclaration ] [ ImplementsDeclaration ] ClassBody .
+
+ExtendsDeclaration = "extends" Name .
+
+ImplementsDeclaration = "implements" Name { "," Name } .
+
+ClassBody = "{" { MemberDeclaration } "}" .
+
+MemberDeclaration = MethodDeclaration
+                  | ConstructorDeclaration
+                  | FieldDeclaration .
+
+(* ***** *)
+
+MethodDeclaration = Access [ "abstract" | "final" | "static" ] TypeExp
+                    Identifier FormalParameterList [ ThrowsClause ]
+                    ( Block | ";" ) .
+
+ConstructorDeclaration = Access Identifier FormalParameterList
+                         [ ThrowsClause ] Block .
+
+FieldDeclaration = Access TypeExp Identifier [ "=" Expression ] ";" .
+
+(* ***** *)
+
+Block = "{" { Statement | LocalDeclaration } "}" .
+
+LocalDeclaration = TypeExp Identifier [ "=" Expression ] .
+
+Statement = IfStatement
+          | WhileStatement
+          | ForStatement
+          | Block
+          | EmptyStatement
+          | ExpressionStatement
+          | ReturnStatement .
+
+IfStatement = "if" "(" Expression ")" Statement [ "else" Statement ] .
+
+WhileStatement = "while" "(" Expression ")" Statement .
+
+ForStatement = "for" "(" [ ForInitializer ] ";" [ Expression ] ";"
+               [ StatementExpression ] ")" Statement .
+
+ForInitializer = StatementExpression | LocalDeclaration .
+
+EmptyStatement = ";" .
+
+ExpressionStatement = StatementExpression ";" .
+
+ReturnStatement = "return" [ Expression ] ";" .
+
+(* ***** *)
+
+Expression = AssignmentExpression .
+
+StatementExpression = Assignment
+                    | MethodInvocation
+                    | ClassInstanceCreationExpression .
+
+AssignmentExpression = BinaryExpression | Assignment .
+
+Assignment = LeftHandSide "=" AssignmentExpression .
+
+BinaryExpression = UnaryExpression { BinaryOperator UnaryExpression } .
+
+UnaryExpression = Primary
+                | Name
+                | ( "-" | "!" ) UnaryExpression
+                | "(" Type ")" UnaryExpression .
+
+Primary = PrimaryNoNewarray | ArrayCreationExpression .
+
+PrimaryNoNewarray = Literal
+                  | "this"
+                  | "(" Expression ")"
+                  | ClassInstanceCreationExpression
+                  | FieldAccess
+                  | MethodInvocation .
+
+ArrayCreationExpression = "new" Type "[" Expression "]" .
+
+LeftHandSide = Name | FieldAccess | ArrayAccess .
+
+FieldAccess = Primary "." Identifier .
+
+ArrayAccess = Name "[" Expression "]" | PrimaryNoNewarray "[" Expression "]" .
+
+ClassInstanceCreationExpression = "new" Name ArgumentList .
+
+MethodInvocation = ( Name | Primary "." Identifier ) ArgumentList  .
+
+(* ***** *)
+
+BinaryOperator = "||" | "&&" | "|" | "^" | "&" | "==" | "!=" | "<" | ">"
+               | "<=" | ">=" | "+" | "-" | "*" | "/" | "%" .
+
+FormalParameterList = "(" [ FormalParameter { "," FormalParameter } ] ")" .
+
+FormalParameter = TypeExp Identifier .
+
+ArgumentList = "(" [ Expression { "," Expression } ] ")" .
+
+TypeExp = "void" | Type [ "[" "]" ] .
+
+Type = PrimitiveType | Name .
+
+PrimitiveType = "boolean" | "byte" | "char" | "int" | "short" .
+
+Access = "public" | "protected" .
+
+ThrowsClause = "throws" Name { "," Name } .
+
+Name = Identifier { "." Identifier } .
+
+Identifier = IDENTIFIER .
+
+Literal = IntegerLiteral | CharacterLiteral | StringLiteral .
+
+IntegerLiteral = INTEGER_LITERAL .
+
+CharacterLiteral = CHARACTER_LITERAL .
+
+StringLiteral = STRING_LITERAL .

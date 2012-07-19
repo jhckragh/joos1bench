@@ -32,7 +32,7 @@ FieldDeclaration = Access TypeExp Identifier [ "=" Expression ] ";" .
 
 Block = "{" { Statement | LocalDeclaration } "}" .
 
-LocalDeclaration = TypeExp Identifier [ "=" Expression ] .
+LocalDeclaration = TypeExp Identifier [ "=" Expression ] ";" .
 
 Statement = IfStatement
           | WhileStatement
@@ -78,7 +78,7 @@ UnaryExpression = Primary
 
 Primary = PrimaryNoNewarray | ArrayCreationExpression .
 
-PrimaryNoNewarray = Literal
+PrimaryNoNewArray = Literal
                   | "this"
                   | "(" Expression ")"
                   | ClassInstanceCreationExpression
@@ -91,7 +91,7 @@ LeftHandSide = Name | FieldAccess | ArrayAccess .
 
 FieldAccess = Primary "." Identifier .
 
-ArrayAccess = Name "[" Expression "]" | PrimaryNoNewarray "[" Expression "]" .
+ArrayAccess = Name "[" Expression "]" | PrimaryNoNewArray "[" Expression "]" .
 
 ClassInstanceCreationExpression = "new" Name ArgumentList .
 

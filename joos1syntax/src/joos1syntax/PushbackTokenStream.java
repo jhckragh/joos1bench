@@ -36,6 +36,13 @@ public final class PushbackTokenStream {
     return null;
   }
 
+  public Token lookAhead(int offset) {
+    if (offset >= deque.size())
+      return eot;
+    else
+      return (Token) deque.get(offset);
+  }
+
   public void unget(Token t) {
     deque.addFirst((Object) t);
   }

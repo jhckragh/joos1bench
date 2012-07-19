@@ -109,11 +109,16 @@ public final class SyntaxChecker {
         currentToken = access;
         checkMethodDeclaration();
       } else {
-        boolean possiblyConstructor = true;
         if (currentToken.kind() == constants.VOID) {
+          // Void method
           acceptIt();
-          possiblyConstructor = false;
+          accept(constants.IDENTIFIER);
+          checkFormalParameterList();
+          if (currentToken.kind() == constants.THROWS)
+            checkThrowsClause();
+          checkBlock();
         } else {
+          boolean possiblyConstructor = true;
           if (currentToken.kind() == constants.BOOLEAN ||
               currentToken.kind() == constants.BYTE ||
               currentToken.kind() == constants.CHAR ||
@@ -198,8 +203,102 @@ public final class SyntaxChecker {
 
   protected void checkBlock() {
     accept(constants.L_BRACE);
-    // TODO
+
+    boolean done = false;
+    while (!done) {
+      if (currentToken.kind() == constants.IF ||
+          currentToken.kind() == constants.WHILE ||
+          currentToken.kind() == constants.FOR ||
+          currentToken.kind() == constants.L_BRACE ||
+          currentToken.kind() == constants.L_PAREN ||
+          currentToken.kind() == constants.SEMICOLON ||
+          currentToken.kind() == constants.RETURN ||
+          currentToken.kind() == constants.NEW ||
+          currentToken.kind() == constants.INTEGER_LITERAL ||
+          currentToken.kind() == constants.CHAR_LITERAL ||
+          currentToken.kind() == constants.STRING_LITERAL ||
+          currentToken.kind() == constants.THIS) {
+        checkStatement();
+      } else if (currentToken.kind() == constants.VOID ||
+                 currentToken.kind() == constants.BOOLEAN ||
+                 currentToken.kind() == constants.BYTE ||
+                 currentToken.kind() == constants.CHAR ||
+                 currentToken.kind() == constants.INT ||
+                 currentToken.kind() == constants.SHORT) {
+        checkLocalDeclaration();
+      } else if (currentToken.kind() == constants.IDENTIFIER) {
+        int off = 0;
+        while (tokenStream.lookAhead(off).kind() == constants.DOT) {
+          off = off + 1;
+          if (tokenStream.lookAhead(off).kind() == constants.IDENTIFIER)
+            off = off + 1;
+        }
+        if (tokenStream.lookAhead(off).kind() == constants.L_BRACKET) {
+          if (tokenStream.lookAhead(off+1).kind() == constants.R_BRACKET)
+            checkLocalDeclaration();
+          else
+            checkStatement();
+        } else if (tokenStream.lookAhead(off).kind() == constants.IDENTIFIER) {
+          checkLocalDeclaration();
+        } else if (tokenStream.lookAhead(off).kind() == constants.ASSIGN) {
+          checkStatement();
+        } else {
+          syntaxError("Expected statement or local declaration",
+                      currentToken.line(), currentToken.column());
+        }
+      } else {
+        done = true;
+      }
+    }
+
     accept(constants.R_BRACE);
+  }
+
+  protected void checkStatement() {
+    if (currentToken.kind() == constants.IF)
+      checkIfStatement();
+    else if (currentToken.kind() == constants.WHILE)
+      checkWhileStatement();
+    else if (currentToken.kind() == constants.FOR)
+      checkForStatement();
+    else if (currentToken.kind() == constants.L_BRACE)
+      checkBlock();
+    else if (currentToken.kind() == constants.SEMICOLON)
+      acceptIt();
+    else if (currentToken.kind() == constants.RETURN)
+      checkReturnStatement();
+    else
+      checkExpressionStatement();
+  }
+
+  protected void checkIfStatement() {
+    // TODO
+  }
+
+  protected void checkWhileStatement() {
+    // TODO
+  }
+
+  protected void checkForStatement() {
+    // TODO
+  }
+
+  protected void checkReturnStatement() {
+    // TODO
+  }
+
+  protected void checkExpressionStatement() {
+    // TODO
+  }
+
+  protected void checkLocalDeclaration() {
+    checkTypeExp();
+    accept(constants.IDENTIFIER);
+    if (currentToken.kind() == constants.ASSIGN) {
+      acceptIt();
+      checkExpression();
+    }
+    accept(constants.SEMICOLON);
   }
 
   protected void checkThrowsClause() {

@@ -172,6 +172,10 @@ public final class SyntaxChecker {
     // TODO
   }
 
+  protected void checkStatementExpression() {
+    // TODO
+  }
+
   protected void checkMethodDeclaration() {
     if (isAccess(currentToken))
       acceptIt();
@@ -272,23 +276,53 @@ public final class SyntaxChecker {
   }
 
   protected void checkIfStatement() {
-    // TODO
+    accept(constants.IF);
+    accept(constants.L_PAREN);
+    checkExpression();
+    accept(constants.R_PAREN);
+    checkStatement();
+    if (currentToken.kind() == constants.ELSE) {
+      acceptIt();
+      checkStatement();
+    }
   }
 
   protected void checkWhileStatement() {
-    // TODO
+    accept(constants.WHILE);
+    accept(constants.L_PAREN);
+    checkExpression();
+    accept(constants.R_PAREN);
+    checkStatement();
   }
 
   protected void checkForStatement() {
+    accept(constants.FOR);
+    accept(constants.L_PAREN);
+    if (currentToken.kind() != constants.COMMA)
+      checkForInitializer();
+    accept(constants.SEMICOLON);
+    if (currentToken.kind() != constants.COMMA)
+      checkExpression();
+    accept(constants.SEMICOLON);
+    if (currentToken.kind() != constants.R_PAREN)
+      checkStatementExpression();
+    accept(constants.R_PAREN);
+  }
+
+  protected void checkForInitializer() {
     // TODO
   }
 
   protected void checkReturnStatement() {
-    // TODO
+    accept(constants.RETURN);
+    if (currentToken.kind() != constants.SEMICOLON)
+      checkExpression();
+    accept(constants.SEMICOLON);
   }
 
   protected void checkExpressionStatement() {
-    // TODO
+    checkStatementExpression();
+    accept(constants.SEMICOLON);
   }
 
   protected void checkLocalDeclaration() {

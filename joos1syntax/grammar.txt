@@ -30,9 +30,11 @@ FieldDeclaration = Access TypeExp Identifier [ "=" Expression ] ";" .
 
 (* ***** *)
 
-Block = "{" { Statement | LocalDeclaration } "}" .
+Block = "{" { Statement | LocalDeclarationStatement } "}" .
 
-LocalDeclaration = TypeExp Identifier [ "=" Expression ] ";" .
+LocalDeclarationStatement = LocalDeclaration ";" .
+
+LocalDeclaration = TypeExp Identifier [ "=" Expression ] .
 
 Statement = IfStatement
           | WhileStatement
@@ -59,43 +61,27 @@ ReturnStatement = "return" [ Expression ] ";" .
 
 (* ***** *)
 
-Expression = AssignmentExpression .
+Expression = UnaryExpression ( [ "=" Expression ] |
+                 { BinaryOperator UnaryExpression } [ "instanceof" Name [ "[" "]" ] ] ) .
 
-StatementExpression = Assignment
-                    | MethodInvocation
-                    | ClassInstanceCreationExpression .
+StatementExpression = UnaryExpression [ "=" Expression ] .
 
-AssignmentExpression = BinaryExpression | Assignment .
-
-Assignment = LeftHandSide "=" AssignmentExpression .
-
-BinaryExpression = UnaryExpression { BinaryOperator UnaryExpression } .
-
-UnaryExpression = Primary
-                | Name
+UnaryExpression = PostfixExpression
                 | ( "-" | "!" ) UnaryExpression
-                | "(" Type ")" UnaryExpression .
+                | "(" TypeExp ")" UnaryExpression .
 
-Primary = PrimaryNoNewarray | ArrayCreationExpression .
+PostfixExpression = PrimaryExpression { PostfixOperator } .
 
-PrimaryNoNewArray = Literal
+PostfixOperator = "[" Expression "]"
+                | "(" [ Expression { "," Expression } ] ")"
+                | "." IDENTIFIER .
+
+PrimaryExpression = IDENTIFIER
+                  | Literal
                   | "this"
                   | "(" Expression ")"
-                  | ClassInstanceCreationExpression
-                  | FieldAccess
-                  | MethodInvocation .
-
-ArrayCreationExpression = "new" Type "[" Expression "]" .
-
-LeftHandSide = Name | FieldAccess | ArrayAccess .
-
-FieldAccess = Primary "." Identifier .
-
-ArrayAccess = Name "[" Expression "]" | PrimaryNoNewArray "[" Expression "]" .
-
-ClassInstanceCreationExpression = "new" Name ArgumentList .
-
-MethodInvocation = ( Name | Primary "." Identifier ) ArgumentList  .
+                  | "new" ( PrimitiveType "[" Expression "]"
+                              | Name ( "[" Expression "]" | ArgumentList ) ) .
 
 (* ***** *)
 
@@ -122,7 +108,9 @@ Name = Identifier { "." Identifier } .
 
 Identifier = IDENTIFIER .
 
-Literal = IntegerLiteral | CharacterLiteral | StringLiteral .
+Literal = "null" | BooleanLiteral | IntegerLiteral | CharacterLiteral | StringLiteral .
+
+BooleanLiteral = "true" | "false" .
 
 IntegerLiteral = INTEGER_LITERAL .
 

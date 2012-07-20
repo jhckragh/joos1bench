@@ -106,6 +106,7 @@ public final class SyntaxChecker {
           next.kind() == constants.STATIC) {
         checkMethodDeclaration();
       } else {
+        acceptIt(); // Accept access modifier
         if (currentToken.kind() == constants.VOID) {
           // Void method
           acceptIt();
@@ -116,11 +117,7 @@ public final class SyntaxChecker {
           checkBlock();
         } else {
           boolean possiblyConstructor = true;
-          if (currentToken.kind() == constants.BOOLEAN ||
-              currentToken.kind() == constants.BYTE ||
-              currentToken.kind() == constants.CHAR ||
-              currentToken.kind() == constants.INT ||
-              currentToken.kind() == constants.SHORT) {
+          if (isPrimitive(currentToken)) {
             acceptIt();
             possiblyConstructor = false;
           } else {
@@ -166,11 +163,146 @@ public final class SyntaxChecker {
   }
 
   protected void checkExpression() {
-    // TODO
+    checkUnaryExpression();
+    if (currentToken.kind() == constants.ASSIGN) {
+      // TODO: Use the above unary expression to check
+      //       when this assignment is allowed.
+      acceptIt();
+      checkExpression();
+    } else {
+      while (isBinaryOperator(currentToken)) {
+        acceptIt();
+        checkUnaryExpression();
+      }
+      if (currentToken.kind() == constants.INSTANCEOF) {
+        acceptIt();
+        if (isPrimitive(currentToken)) {
+          acceptIt();
+          accept(constants.L_BRACKET);
+          accept(constants.R_BRACKET);
+        } else {
+          checkTypeExp();
+        }
+      }
+    }
   }
 
   protected void checkStatementExpression() {
-    // TODO
+    checkUnaryExpression();
+    if (currentToken.kind() == constants.ASSIGN) {
+      // TODO: Use the above unary expression to check
+      //       when this assignment is allowed.
+      acceptIt();
+      checkExpression();
+    }
+  }
+
+  protected void checkUnaryExpression() {
+    if (currentToken.kind() == constants.MINUS ||
+        currentToken.kind() == constants.COMPLEMENT) {
+      // TODO: Can't be an assignment
+      acceptIt();
+      checkUnaryExpression();
+    } else if (currentToken.kind() == constants.IDENTIFIER ||
+               isLiteral(currentToken) ||
+               currentToken.kind() == constants.THIS ||
+               currentToken.kind() == constants.NEW) {
+      // TODO: When can this be an assignment?
+      checkPostfixExpression();
+    } else if (currentToken.kind() == constants.L_PAREN) {
+      // TODO: Can't be an assignment according to reference compiler
+      int off = 0;
+      while (tokenStream.lookAhead(off).kind() != constants.R_PAREN &&
+             tokenStream.lookAhead(off).kind() != constants.EOT) {
+        off = off + 1;
+      }
+      if (tokenStream.lookAhead(off).kind() == constants.R_PAREN) {
+        Token next = tokenStream.lookAhead(off + 1);
+        if (predictsUnary(next))
+          checkCastExpression();
+        else
+          checkPostfixExpression();
+      } else {
+        syntaxError("Unmatched parenthesis",
+                    currentToken.line(), currentToken.column());
+      }
+    } else {
+      syntaxError("Missing expression or invalid start of expression",
+                  currentToken.line(), currentToken.column());
+    }
+  }
+
+  protected void checkPostfixExpression() {
+    checkPrimaryExpression();
+    while (currentToken.kind() == constants.L_BRACKET ||
+           currentToken.kind() == constants.L_PAREN ||
+           currentToken.kind() == constants.DOT) {
+      if (currentToken.kind() == constants.L_BRACKET) {
+        acceptIt();
+        checkExpression();
+        accept(constants.R_BRACKET);
+      } else if (currentToken.kind() == constants.L_PAREN) {
+        checkArgumentList();
+      } else { // "." IDENTIFIER
+        accept(constants.DOT);
+        accept(constants.IDENTIFIER);
+      }
+    }
+  }
+
+  protected void checkPrimaryExpression() {
+    if (currentToken.kind() == constants.IDENTIFIER ||
+        isLiteral(currentToken) ||
+        currentToken.kind() == constants.THIS) {
+      acceptIt();
+    } else if (currentToken.kind() == constants.L_PAREN) {
+      checkParExpression();
+    } else if (currentToken.kind() == constants.NEW) {
+      acceptIt();
+      if (isPrimitive(currentToken)) {
+        acceptIt();
+        accept(constants.L_BRACKET);
+        checkExpression();
+        accept(constants.R_BRACKET);
+      } else {
+        checkName();
+        if (currentToken.kind() == constants.L_BRACKET) {
+          acceptIt();
+          checkExpression();
+          accept(constants.R_BRACKET);
+        } else {
+          checkArgumentList();
+        }
+      }
+    } else {
+      syntaxError("Invalid primary expression",
+                  currentToken.line(), currentToken.column());
+    }
+  }
+
+  protected void checkCastExpression() {
+    accept(constants.L_PAREN);
+    checkTypeExp();
+    accept(constants.R_PAREN);
+    checkUnaryExpression();
+  }
+
+  protected void checkParExpression() {
+    accept(constants.L_PAREN);
+    checkExpression();
+    accept(constants.R_PAREN);
+  }
+
+  protected void checkArgumentList() {
+    accept(constants.L_PAREN);
+    if (currentToken.kind() != constants.R_PAREN) {
+      checkExpression();
+      while (currentToken.kind() == constants.COMMA) {
+        acceptIt();
+        checkExpression();
+      }
+    }
+    accept(constants.R_PAREN);
   }
 
   protected void checkMethodDeclaration() {
@@ -221,12 +353,8 @@ public final class SyntaxChecker {
           currentToken.kind() == constants.THIS) {
         checkStatement();
       } else if (currentToken.kind() == constants.VOID ||
-                 currentToken.kind() == constants.BOOLEAN ||
-                 currentToken.kind() == constants.BYTE ||
-                 currentToken.kind() == constants.CHAR ||
-                 currentToken.kind() == constants.INT ||
-                 currentToken.kind() == constants.SHORT) {
-        checkLocalDeclaration();
+                 isPrimitive(currentToken)) {
+        checkLocalDeclarationStatement();
       } else if (currentToken.kind() == constants.IDENTIFIER) {
         int off = 0;
         while (tokenStream.lookAhead(off).kind() == constants.DOT) {
@@ -234,13 +362,15 @@ public final class SyntaxChecker {
           if (tokenStream.lookAhead(off).kind() == constants.IDENTIFIER)
             off = off + 1;
         }
-        if (tokenStream.lookAhead(off).kind() == constants.L_BRACKET) {
+        if (tokenStream.lookAhead(off).kind() == constants.L_PAREN) {
+          checkStatement();
+        } else if (tokenStream.lookAhead(off).kind() == constants.L_BRACKET) {
           if (tokenStream.lookAhead(off+1).kind() == constants.R_BRACKET)
-            checkLocalDeclaration();
+            checkLocalDeclarationStatement();
           else
             checkStatement();
         } else if (tokenStream.lookAhead(off).kind() == constants.IDENTIFIER) {
-          checkLocalDeclaration();
+          checkLocalDeclarationStatement();
         } else if (tokenStream.lookAhead(off).kind() == constants.ASSIGN) {
           checkStatement();
         } else {
@@ -295,19 +425,23 @@ public final class SyntaxChecker {
   protected void checkForStatement() {
     accept(constants.FOR);
     accept(constants.L_PAREN);
-    if (currentToken.kind() != constants.COMMA)
+    if (currentToken.kind() != constants.SEMICOLON)
       checkForInitializer();
     accept(constants.SEMICOLON);
-    if (currentToken.kind() != constants.COMMA)
+    if (currentToken.kind() != constants.SEMICOLON)
       checkExpression();
     accept(constants.SEMICOLON);
     if (currentToken.kind() != constants.R_PAREN)
       checkStatementExpression();
     accept(constants.R_PAREN);
+    checkStatement();
   }
 
   protected void checkForInitializer() {
-    // TODO
+    if (predictsUnary(currentToken))
+      checkStatementExpression();
+    else
+      checkLocalDeclaration();
   }
 
   protected void checkReturnStatement() {
@@ -322,6 +456,11 @@ public final class SyntaxChecker {
     accept(constants.SEMICOLON);
   }
 
+  protected void checkLocalDeclarationStatement() {
+    checkLocalDeclaration();
+    accept(constants.SEMICOLON);
+  }
+
   protected void checkLocalDeclaration() {
     checkTypeExp();
     accept(constants.IDENTIFIER);
@@ -329,7 +468,6 @@ public final class SyntaxChecker {
       acceptIt();
       checkExpression();
     }
-    accept(constants.SEMICOLON);
   }
 
   protected void checkThrowsClause() {
@@ -390,8 +528,46 @@ public final class SyntaxChecker {
     }
   }
 
+  protected boolean predictsUnary(Token t) {
+    return t.kind() == constants.MINUS ||
+      t.kind() == constants.COMPLEMENT ||
+      t.kind() == constants.L_PAREN ||
+      t.kind() == constants.IDENTIFIER ||
+      isLiteral(t) ||
+      t.kind() == constants.THIS ||
+      t.kind() == constants.NEW;
+  }
+
   protected boolean isAccess(Token t) {
     return t.kind() == constants.PUBLIC || t.kind() == constants.PROTECTED;
+  }
+
+  protected boolean isBinaryOperator(Token t) {
+    return t.kind() == constants.OR_OR ||
+      t.kind() == constants.AND_AND ||
+      t.kind() == constants.OR ||
+      t.kind() == constants.XOR ||
+      t.kind() == constants.AND ||
+      t.kind() == constants.EQ ||
+      t.kind() == constants.NEQ ||
+      t.kind() == constants.LT ||
+      t.kind() == constants.GT ||
+      t.kind() == constants.LTEQ ||
+      t.kind() == constants.GTEQ ||
+      t.kind() == constants.PLUS ||
+      t.kind() == constants.MINUS ||
+      t.kind() == constants.STAR ||
+      t.kind() == constants.DIV ||
+      t.kind() == constants.MOD;
+  }
+
+  protected boolean isLiteral(Token t) {
+    return t.kind() == constants.INTEGER_LITERAL ||
+      t.kind() == constants.CHAR_LITERAL ||
+      t.kind() == constants.STRING_LITERAL ||
+      t.kind() == constants.NULL ||
+      t.kind() == constants.TRUE ||
+      t.kind() == constants.FALSE;
   }
 
   protected boolean isModifier(Token t) {
@@ -400,12 +576,29 @@ public final class SyntaxChecker {
       t.kind() == constants.STATIC;
   }
 
+  protected boolean isPrimitive(Token t) {
+    return t.kind() == constants.BOOLEAN ||
+      t.kind() == constants.BYTE ||
+      t.kind() == constants.CHAR ||
+      t.kind() == constants.INT ||
+      t.kind() == constants.SHORT;
+  }
+
   protected void accept(byte expected) {
+    accept(expected, (String) null);
+  }
+
+  protected void accept(byte expected, String source) {
+    if (source == null)
+      source = "";
+    else
+      source = source + ": ";
+
     if (currentToken.kind() == expected)
       acceptIt();
     else
-      syntaxError("expected '" + constants.spell(expected) + "' " +
-                  "but saw '" + constants.spell(currentToken.kind()) + "'",
+      syntaxError(source + "expected '" + constants.spell(expected) +
+                  "' but saw " + debug(currentToken),
                   currentToken.line(), currentToken.column());
   }
 
@@ -417,5 +610,19 @@ public final class SyntaxChecker {
     System.err.println("Syntax error on line " + line + ", col " + col + ":\n" +
                        msg);
     System.exit(1);
+  }
+
+  protected String debug(Token t) {
+    if (t.kind() == constants.IDENTIFIER)
+      return "IDENTIFIER[" + t.text() + "]";
+    if (t.kind() == constants.INTEGER_LITERAL)
+      return "INTEGER_LITERAL[" + t.text() + "]";
+    if (t.kind() == constants.STRING_LITERAL)
+      return "STRING_LITERAL[" + t.text() + "]";
+    if (t.kind() == constants.CHAR_LITERAL)
+      return "CHAR_LITERAL[" + t.text() + "]";
+    if (t.kind() == constants.TRUE || t.kind() == constants.FALSE)
+      return "BOOLEAN_LITERAL[" + t.text() + "]";
+    return "'" + t.text() + "'";
   }
 }

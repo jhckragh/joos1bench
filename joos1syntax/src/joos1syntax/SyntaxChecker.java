@@ -12,7 +12,7 @@ import java.util.List;
 public final class SyntaxChecker {
   protected TokenConstants constants;
   protected Token currentToken;
-  protected PushbackTokenStream tokenStream;
+  protected TokenStream tokenStream;
 
   public SyntaxChecker() {
     constants = new TokenConstants();
@@ -20,7 +20,7 @@ public final class SyntaxChecker {
 
   public String init(Reader in) throws IOException {
     Lexer lexer = new Lexer(in);
-    tokenStream = new PushbackTokenStream();
+    tokenStream = new TokenStream();
     Token err = tokenStream.init(lexer);
     if (err != null)
       return "Lexical error on line " + err.line() + ", col " + err.column() +
@@ -100,13 +100,10 @@ public final class SyntaxChecker {
     accept(constants.L_BRACE);
 
     while (isAccess(currentToken)) {
-      Token access = currentToken;
-      acceptIt();
-      if (currentToken.kind() == constants.ABSTRACT ||
-          currentToken.kind() == constants.FINAL ||
-          currentToken.kind() == constants.STATIC) {
-        tokenStream.unget(currentToken);
-        currentToken = access;
+      Token next = tokenStream.lookAhead(0);
+      if (next.kind() == constants.ABSTRACT ||
+          next.kind() == constants.FINAL ||
+          next.kind() == constants.STATIC) {
         checkMethodDeclaration();
       } else {
         if (currentToken.kind() == constants.VOID) {

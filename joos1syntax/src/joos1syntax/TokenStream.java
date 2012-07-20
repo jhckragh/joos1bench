@@ -7,12 +7,12 @@ import joos1lexer.TokenConstants;
 import java.io.IOException;
 import java.util.LinkedList;
 
-public final class PushbackTokenStream {
+public final class TokenStream {
   protected TokenConstants constants;
   protected LinkedList deque;
   protected Token eot;
 
-  public PushbackTokenStream() {
+  public TokenStream() {
     constants = new TokenConstants();
   }
 
@@ -41,9 +41,5 @@ public final class PushbackTokenStream {
       return eot;
     else
       return (Token) deque.get(offset);
-  }
-
-  public void unget(Token t) {
-    deque.addFirst((Object) t);
   }
 }

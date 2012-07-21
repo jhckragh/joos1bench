@@ -64,7 +64,7 @@ ReturnStatement = "return" [ Expression ] ";" .
 Expression = UnaryExpression ( [ "=" Expression ] |
                  { BinaryOperator UnaryExpression } [ "instanceof" Name [ "[" "]" ] ] ) .
 
-StatementExpression = UnaryExpression [ "=" Expression ] .
+StatementExpression = (* Assignment | MethodInvocation | ClassInstanceCreationExpression *) .
 
 UnaryExpression = PostfixExpression
                 | ( "-" | "!" ) UnaryExpression

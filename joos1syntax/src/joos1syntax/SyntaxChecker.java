@@ -171,9 +171,9 @@ public final class SyntaxChecker {
 
   protected void checkExpression() {
     Token onEntry = currentToken;
-    boolean assignmentAllowed = checkUnaryExpression();
+    int justEncountered = checkUnaryExpression();
     if (currentToken.kind() == constants.ASSIGN) {
-      if (!assignmentAllowed) {
+      if (justEncountered != 0) {
         syntaxError("Invalid left-hand side of assignment",
                     onEntry.line(), onEntry.column());
       }
@@ -202,24 +202,34 @@ public final class SyntaxChecker {
 
   protected void checkStatementExpression() {
     Token onEntry = currentToken;
-    boolean assignmentAllowed = checkUnaryExpression();
+    int justEncountered = checkUnaryExpression();
     if (currentToken.kind() == constants.ASSIGN) {
-      if (!assignmentAllowed) {
+      if (justEncountered != 0) {
         syntaxError("Invalid left-hand side of assignment",
                     onEntry.line(), onEntry.column());
 
       }
       acceptIt();
       checkExpression();
+    } else if (justEncountered == 3) {
+      syntaxError("Invalid statement expression",
+                  onEntry.line(), onEntry.column());
     }
   }
 
-  protected boolean checkUnaryExpression() {
+  /*
+     Returns
+         0 if encountered a valid left-hand side
+         1 if encountered a method invocation
+         2 if encountered a class instance creation expression
+         3 else
+  */
+  protected int checkUnaryExpression() {
     if (currentToken.kind() == constants.MINUS ||
         currentToken.kind() == constants.COMPLEMENT) {
       acceptIt();
       checkUnaryExpression();
-      return false;
+      return 3;
     } else if (currentToken.kind() == constants.IDENTIFIER ||
                isLiteral(currentToken) ||
                currentToken.kind() == constants.THIS ||
@@ -244,12 +254,12 @@ public final class SyntaxChecker {
         Token next = tokenStream.lookAhead(off);
         if (isPrimitive(leftParenSuccessor)) {
           checkCastExpression();
-          return false;
+          return 3;
         } else if (predictsUnary(next) &&
                    next.kind() != constants.MINUS &&
                    next.kind() != constants.COMPLEMENT) {
           checkCastExpression();
-          return false;
+          return 3;
         } else {
           return checkPostfixExpression();
         }
@@ -261,49 +271,56 @@ public final class SyntaxChecker {
       syntaxError("Missing expression or invalid start of expression",
                   currentToken.line(), currentToken.column());
     }
-    return false;
+    return 3;
   }
 
-  protected boolean checkPostfixExpression() {
+  protected int checkPostfixExpression() {
     if (currentToken.kind() == constants.THIS &&
         tokenStream.lookAhead(0).kind() == constants.L_PAREN)
       syntaxError("Explicit this statement not allowed",
                   currentToken.line(), currentToken.column());
 
-    boolean assignmentAllowed = checkPrimaryExpression();
+    int justEncountered = checkPrimaryExpression();
     byte lastSeen = constants.EOT;
     while (currentToken.kind() == constants.L_BRACKET ||
            currentToken.kind() == constants.L_PAREN ||
            currentToken.kind() == constants.DOT) {
       if (currentToken.kind() == constants.L_BRACKET) {
+        if (lastSeen == constants.R_BRACKET) {
+          syntaxError("Joos 1 does not support multidimensonal arrays",
+                      currentToken.line(), currentToken.column());
+        }
         acceptIt();
         checkExpression();
         accept(constants.R_BRACKET);
         lastSeen = constants.R_BRACKET;
+        justEncountered = 0;
       } else if (currentToken.kind() == constants.L_PAREN) {
         checkArgumentList();
         lastSeen = constants.R_PAREN;
+        justEncountered = 1;
       } else { // "." IDENTIFIER
         accept(constants.DOT);
         accept(constants.IDENTIFIER);
         lastSeen = constants.IDENTIFIER;
+        justEncountered = 0;
       }
     }
-    if (lastSeen == constants.EOT)
-      return assignmentAllowed;
-    return lastSeen == constants.IDENTIFIER || lastSeen == constants.R_BRACKET;
+    return justEncountered;
   }
 
-  protected boolean checkPrimaryExpression() {
+  protected int checkPrimaryExpression() {
     if (currentToken.kind() == constants.IDENTIFIER ||
         isLiteral(currentToken) ||
         currentToken.kind() == constants.THIS) {
-      boolean assignmentAllowed = (currentToken.kind() == constants.IDENTIFIER);
+      int justEncountered = 3;
+      if (currentToken.kind() == constants.IDENTIFIER)
+        justEncountered = 0;
       acceptIt();
-      return assignmentAllowed;
+      return justEncountered;
     } else if (currentToken.kind() == constants.L_PAREN) {
       checkParExpression();
-      return false;
+      return 3;
     } else if (currentToken.kind() == constants.NEW) {
       acceptIt();
       if (isPrimitive(currentToken)) {
@@ -311,21 +328,32 @@ public final class SyntaxChecker {
         accept(constants.L_BRACKET);
         checkExpression();
         accept(constants.R_BRACKET);
+        if (currentToken.kind() == constants.L_BRACKET) {
+          syntaxError("Joos 1 does not support multidimensonal arrays",
+                      currentToken.line(), currentToken.column());
+        }
+        return 3;
       } else {
         checkName();
         if (currentToken.kind() == constants.L_BRACKET) {
           acceptIt();
           checkExpression();
           accept(constants.R_BRACKET);
+          if (currentToken.kind() == constants.L_BRACKET) {
+            syntaxError("Joos 1 does not support multidimensonal arrays",
+                        currentToken.line(), currentToken.column());
+          }
+          return 3;
         } else {
           checkArgumentList();
+          return 2;
         }
       }
     } else {
       syntaxError("Invalid primary expression",
                   currentToken.line(), currentToken.column());
     }
-    return false;
+    return 3;
   }
 
   protected void checkCastExpression() {

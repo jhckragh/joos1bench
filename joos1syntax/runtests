@@ -1,0 +1,115 @@
+#!/usr/bin/env python
+import os
+import subprocess
+import sys
+from string import Template
+
+ROOT = os.path.dirname(os.path.realpath(__file__))
+DRIVER = os.path.join(ROOT, "sc")
+OUTPUT_DIR = os.path.join(ROOT, "out")
+
+TEMPLATE = """<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Syntax Checker Test Results</title>
+    <style type="text/css">
+      body { font-family: sans-serif; }
+      table { border-collapse: collapse; border: 1px solid #666; margin-bottom: 2em; }
+      th, td { padding: 0.1em 1em; }
+      caption { text-align: left; font-size: 1.2em; font-weight: bold; }
+      th { text-align: left; }
+      tbody { font-family: monospace; }
+      .PASSED { color: #00a000; }
+      .FAILED { color: #bf0000; }
+    </style>
+  </head>
+  <body>
+    <h1>Syntax Checker Test Results</h1>
+    <table>
+      <caption>Positive Tests</caption>
+      <thead>
+        <tr>
+          <th scope="col">Test</th>
+          <th scope="col">Status</th>
+          <th scope="col">Output</th>
+        </tr>
+      </thead>
+      <tbody>${POSITIVE_TESTS}</tbody>
+    </table>
+    <table>
+      <caption>Negative Tests</caption>
+      <thead>
+        <tr>
+          <th scope="col">Test</th>
+          <th scope="col">Status</th>
+          <th scope="col">Output</th>
+        </tr>
+      </thead>
+      <tbody>${NEGATIVE_TESTS}</tbody>
+    </table>
+  </body>
+</html>"""
+
+ROW = """<tr>
+<td><a href="${FILE_PATH}">${FILENAME}</a></td>
+<td class="${STATUS}">${STATUS}</td>
+<td><a href="${OUT}">stdout</a> <a href="${ERR}">stderr</a></td>
+</tr>"""
+
+def run_tests(path):
+    if not os.path.exists(OUTPUT_DIR):
+        os.mkdir(OUTPUT_DIR)
+
+    pos = []
+    neg = []
+
+    for f in os.listdir(os.path.join(path, "pos")):
+        file_path = os.path.join(path, "pos", f)
+        out = os.path.join(OUTPUT_DIR, f + ".out")
+        out_file = open(out, "w")
+        err = os.path.join(OUTPUT_DIR, f + ".err")
+        err_file = open(err, "w")
+        rc = subprocess.call([DRIVER, file_path],
+                             stdout=out_file, stderr=err_file)
+        status = "PASSED" if rc == 0 else "FAILED"
+        row = Template(ROW).substitute(FILE_PATH=file_path,
+                                       FILENAME=f,
+                                       STATUS=status,
+                                       OUT=out,
+                                       ERR=err)
+        out_file.close()
+        err_file.close()
+        pos.append(row)
+
+    for f in os.listdir(os.path.join(path, "neg")):
+        file_path = os.path.join(path, "neg", f)
+        out = os.path.join(OUTPUT_DIR, f + ".out")
+        out_file = open(out, "w")
+        err = os.path.join(OUTPUT_DIR, f + ".err")
+        err_file = open(err, "w")
+        rc = subprocess.call([DRIVER, file_path],
+                             stdout=out_file, stderr=err_file)
+        status = "FAILED" if rc == 0 else "PASSED"
+        row = Template(ROW).substitute(FILE_PATH=file_path,
+                                       FILENAME=f,
+                                       STATUS=status,
+                                       OUT=out,
+                                       ERR=err)
+        out_file.close()
+        err_file.close()
+        neg.append(row)
+
+    return Template(TEMPLATE).substitute(POSITIVE_TESTS="\n".join(pos),
+                                         NEGATIVE_TESTS="\n".join(neg))
+
+def main():
+    if len(sys.argv) != 2:
+        print("Usage: %s DIR" % os.path.basename(sys.argv[0]))
+        sys.exit(2)
+    res = open("results.html", "w")
+    res.write(run_tests(os.path.abspath(sys.argv[1])))
+    res.close()
+
+if __name__ == "__main__":
+    main()

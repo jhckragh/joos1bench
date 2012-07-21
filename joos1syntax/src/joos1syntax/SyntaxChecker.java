@@ -176,7 +176,10 @@ public final class SyntaxChecker {
       }
       if (currentToken.kind() == constants.INSTANCEOF) {
         acceptIt();
-        if (isPrimitive(currentToken)) {
+        if (currentToken.kind() == constants.VOID) {
+          syntaxError("void cannot be used in an instanceof test",
+                      currentToken.line(), currentToken.column());
+        } else if (isPrimitive(currentToken)) {
           acceptIt();
           accept(constants.L_BRACKET);
           accept(constants.R_BRACKET);

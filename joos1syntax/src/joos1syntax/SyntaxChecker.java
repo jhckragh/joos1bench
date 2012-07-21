@@ -232,7 +232,9 @@ public final class SyntaxChecker {
         Token next = tokenStream.lookAhead(off);
         if (isPrimitive(leftParenSuccessor))
           checkCastExpression();
-        else if (predictsUnary(next) && next.kind() != constants.MINUS)
+        else if (predictsUnary(next) &&
+                 next.kind() != constants.MINUS &&
+                 next.kind() != constants.COMPLEMENT)
           checkCastExpression();
         else
           checkPostfixExpression();
@@ -247,6 +249,11 @@ public final class SyntaxChecker {
   }
 
   protected void checkPostfixExpression() {
+    if (currentToken.kind() == constants.THIS &&
+        tokenStream.lookAhead(0).kind() == constants.L_PAREN)
+      syntaxError("Explicit this statement not allowed",
+                  currentToken.line(), currentToken.column());
+
     checkPrimaryExpression();
     while (currentToken.kind() == constants.L_BRACKET ||
            currentToken.kind() == constants.L_PAREN ||
@@ -510,6 +517,10 @@ public final class SyntaxChecker {
   }
 
   protected void checkFormalParameter() {
+    if (currentToken.kind() == constants.VOID) {
+      syntaxError("void type is not allowed for formal parameters",
+                  currentToken.line(), currentToken.column());
+    }
     checkTypeExp();
     accept(constants.IDENTIFIER);
   }

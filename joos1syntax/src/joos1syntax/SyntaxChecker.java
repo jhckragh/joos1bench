@@ -212,15 +212,21 @@ public final class SyntaxChecker {
     } else if (currentToken.kind() == constants.L_PAREN) {
       // TODO: Can't be an assignment according to reference compiler
       Token leftParenSuccessor = tokenStream.lookAhead(0);
+      int d = 1;
       int off = 0;
-      while (tokenStream.lookAhead(off).kind() != constants.R_PAREN &&
-             tokenStream.lookAhead(off).kind() != constants.EOT) {
-        // TODO: This while loop doesn't work as intended: It stops at
-        //       the first ')' encountered rather than at the *matching* ')'.
+      while (d != 0 && tokenStream.lookAhead(off).kind() != constants.EOT) {
+        if (tokenStream.lookAhead(off).kind() == constants.L_PAREN)
+          d = d + 1;
+        else if (tokenStream.lookAhead(off).kind() == constants.R_PAREN)
+          d = d - 1;
+        if (d < 0)
+          syntaxError("Mismatched parenthesis",
+                      tokenStream.lookAhead(off).line(),
+                      tokenStream.lookAhead(off).column());
         off = off + 1;
       }
-      if (tokenStream.lookAhead(off).kind() == constants.R_PAREN) {
-        Token next = tokenStream.lookAhead(off + 1);
+      if (d == 0) {
+        Token next = tokenStream.lookAhead(off);
         if (isPrimitive(leftParenSuccessor))
           checkCastExpression();
         else if (predictsUnary(next) && next.kind() != constants.MINUS)

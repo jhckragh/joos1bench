@@ -473,6 +473,10 @@ public final class SyntaxChecker {
   }
 
   protected void checkLocalDeclaration() {
+    if (currentToken.kind() == constants.VOID) {
+      syntaxError("Variables and fields cannot have type void",
+                  currentToken.line(), currentToken.column());
+    }
     checkTypeExp();
     accept(constants.IDENTIFIER);
     if (currentToken.kind() == constants.ASSIGN) {

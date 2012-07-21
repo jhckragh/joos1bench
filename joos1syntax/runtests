@@ -61,6 +61,7 @@ def run_tests(path):
     if not os.path.exists(OUTPUT_DIR):
         os.mkdir(OUTPUT_DIR)
 
+    failed = 0
     pos = []
     neg = []
 
@@ -72,6 +73,8 @@ def run_tests(path):
         err_file = open(err, "w")
         rc = subprocess.call([DRIVER, file_path],
                              stdout=out_file, stderr=err_file)
+        if rc != 0:
+            failed += 1
         status = "PASSED" if rc == 0 else "FAILED"
         row = Template(ROW).substitute(FILE_PATH=file_path,
                                        FILENAME=f,
@@ -90,6 +93,8 @@ def run_tests(path):
         err_file = open(err, "w")
         rc = subprocess.call([DRIVER, file_path],
                              stdout=out_file, stderr=err_file)
+        if rc == 0:
+            failed += 1
         status = "FAILED" if rc == 0 else "PASSED"
         row = Template(ROW).substitute(FILE_PATH=file_path,
                                        FILENAME=f,
@@ -100,16 +105,27 @@ def run_tests(path):
         err_file.close()
         neg.append(row)
 
-    return Template(TEMPLATE).substitute(POSITIVE_TESTS="\n".join(pos),
-                                         NEGATIVE_TESTS="\n".join(neg))
+    return (Template(TEMPLATE).substitute(POSITIVE_TESTS="\n".join(pos),
+                                          NEGATIVE_TESTS="\n".join(neg)),
+            failed)
 
 def main():
+    OK = "\033[92m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+
     if len(sys.argv) != 2:
         print("Usage: %s DIR" % os.path.basename(sys.argv[0]))
         sys.exit(2)
+
+    (html, failed) = run_tests(os.path.abspath(sys.argv[1]))
     res = open("results.html", "w")
-    res.write(run_tests(os.path.abspath(sys.argv[1])))
+    res.write(html)
     res.close()
+    if failed == 0:
+        print(OK + "[ OK ]" + ENDC + " ALL TESTS PASSED!")
+    else:
+        print(FAIL + "[ FAILED ]" + ENDC + " %d tests failed to pass." % failed)
 
 if __name__ == "__main__":
     main()

@@ -211,14 +211,19 @@ public final class SyntaxChecker {
       checkPostfixExpression();
     } else if (currentToken.kind() == constants.L_PAREN) {
       // TODO: Can't be an assignment according to reference compiler
+      Token leftParenSuccessor = tokenStream.lookAhead(0);
       int off = 0;
       while (tokenStream.lookAhead(off).kind() != constants.R_PAREN &&
              tokenStream.lookAhead(off).kind() != constants.EOT) {
+        // TODO: This while loop doesn't work as intended: It stops at
+        //       the first ')' encountered rather than at the *matching* ')'.
         off = off + 1;
       }
       if (tokenStream.lookAhead(off).kind() == constants.R_PAREN) {
         Token next = tokenStream.lookAhead(off + 1);
-        if (predictsUnary(next))
+        if (isPrimitive(leftParenSuccessor))
+          checkCastExpression();
+        else if (predictsUnary(next) && next.kind() != constants.MINUS)
           checkCastExpression();
         else
           checkPostfixExpression();

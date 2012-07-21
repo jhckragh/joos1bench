@@ -75,10 +75,17 @@ public final class SyntaxChecker {
 
   protected void checkClassDeclaration() {
     accept(constants.PUBLIC);
+    boolean isFinal = (currentToken.kind() == constants.FINAL);
     if (currentToken.kind() == constants.FINAL)
       acceptIt();
-    if (currentToken.kind() == constants.ABSTRACT)
-      acceptIt();
+    if (currentToken.kind() == constants.ABSTRACT) {
+      if (isFinal) {
+        syntaxError("A final class cannot be abstract",
+                    currentToken.line(), currentToken.column());
+      } else {
+        acceptIt();
+      }
+    }
     accept(constants.CLASS);
     accept(constants.IDENTIFIER);
     if (currentToken.kind() == constants.EXTENDS) {
@@ -303,6 +310,10 @@ public final class SyntaxChecker {
 
   protected void checkCastExpression() {
     accept(constants.L_PAREN);
+    if (currentToken.kind() == constants.VOID) {
+      syntaxError("void cast not allowed",
+                  currentToken.line(), currentToken.column());
+    }
     checkTypeExp();
     accept(constants.R_PAREN);
     checkUnaryExpression();

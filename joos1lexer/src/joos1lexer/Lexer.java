@@ -102,9 +102,6 @@ public final class Lexer {
     // Character literals
     if (currentChar == '\'') {
       takeIt();
-      
-      if (currentChar < '\000' || currentChar > '\255')
-        return err("character outside of range [\\000-\\255]", line, column);
 
       if (currentChar == '\r' || currentChar == '\n')
         return err("line end in character literal", line, column);
@@ -135,9 +132,6 @@ public final class Lexer {
       takeIt();
       StringBuffer sb = new StringBuffer();
       while (currentChar != '"' && currentChar != -1) {
-        if (currentChar < '\000' || currentChar > '\255')
-          return err("character outside of range [\\000-\\255]", line, column);
-
         if (currentChar == '\r' || currentChar == '\n')
           return err("line end in string literal", line, column);
 

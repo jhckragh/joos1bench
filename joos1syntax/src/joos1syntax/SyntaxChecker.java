@@ -170,10 +170,13 @@ public final class SyntaxChecker {
   }
 
   protected void checkExpression() {
-    checkUnaryExpression();
+    Token onEntry = currentToken;
+    boolean assignmentAllowed = checkUnaryExpression();
     if (currentToken.kind() == constants.ASSIGN) {
-      // TODO: Use the above unary expression to check
-      //       when this assignment is allowed.
+      if (!assignmentAllowed) {
+        syntaxError("Invalid left-hand side of assignment",
+                    onEntry.line(), onEntry.column());
+      }
       acceptIt();
       checkExpression();
     } else {
@@ -198,29 +201,31 @@ public final class SyntaxChecker {
   }
 
   protected void checkStatementExpression() {
-    checkUnaryExpression();
+    Token onEntry = currentToken;
+    boolean assignmentAllowed = checkUnaryExpression();
     if (currentToken.kind() == constants.ASSIGN) {
-      // TODO: Use the above unary expression to check
-      //       when this assignment is allowed.
+      if (!assignmentAllowed) {
+        syntaxError("Invalid left-hand side of assignment",
+                    onEntry.line(), onEntry.column());
+
+      }
       acceptIt();
       checkExpression();
     }
   }
 
-  protected void checkUnaryExpression() {
+  protected boolean checkUnaryExpression() {
     if (currentToken.kind() == constants.MINUS ||
         currentToken.kind() == constants.COMPLEMENT) {
-      // TODO: Can't be an assignment
       acceptIt();
       checkUnaryExpression();
+      return false;
     } else if (currentToken.kind() == constants.IDENTIFIER ||
                isLiteral(currentToken) ||
                currentToken.kind() == constants.THIS ||
                currentToken.kind() == constants.NEW) {
-      // TODO: When can this be an assignment?
-      checkPostfixExpression();
+      return checkPostfixExpression();
     } else if (currentToken.kind() == constants.L_PAREN) {
-      // TODO: Can't be an assignment according to reference compiler
       Token leftParenSuccessor = tokenStream.lookAhead(0);
       int d = 1;
       int off = 0;
@@ -237,14 +242,17 @@ public final class SyntaxChecker {
       }
       if (d == 0) {
         Token next = tokenStream.lookAhead(off);
-        if (isPrimitive(leftParenSuccessor))
+        if (isPrimitive(leftParenSuccessor)) {
           checkCastExpression();
-        else if (predictsUnary(next) &&
-                 next.kind() != constants.MINUS &&
-                 next.kind() != constants.COMPLEMENT)
+          return false;
+        } else if (predictsUnary(next) &&
+                   next.kind() != constants.MINUS &&
+                   next.kind() != constants.COMPLEMENT) {
           checkCastExpression();
-        else
-          checkPostfixExpression();
+          return false;
+        } else {
+          return checkPostfixExpression();
+        }
       } else {
         syntaxError("Unmatched parenthesis",
                     currentToken.line(), currentToken.column());
@@ -253,15 +261,17 @@ public final class SyntaxChecker {
       syntaxError("Missing expression or invalid start of expression",
                   currentToken.line(), currentToken.column());
     }
+    return false;
   }
 
-  protected void checkPostfixExpression() {
+  protected boolean checkPostfixExpression() {
     if (currentToken.kind() == constants.THIS &&
         tokenStream.lookAhead(0).kind() == constants.L_PAREN)
       syntaxError("Explicit this statement not allowed",
                   currentToken.line(), currentToken.column());
 
-    checkPrimaryExpression();
+    boolean assignmentAllowed = checkPrimaryExpression();
+    byte lastSeen = constants.EOT;
     while (currentToken.kind() == constants.L_BRACKET ||
            currentToken.kind() == constants.L_PAREN ||
            currentToken.kind() == constants.DOT) {
@@ -269,22 +279,31 @@ public final class SyntaxChecker {
         acceptIt();
         checkExpression();
         accept(constants.R_BRACKET);
+        lastSeen = constants.R_BRACKET;
       } else if (currentToken.kind() == constants.L_PAREN) {
         checkArgumentList();
+        lastSeen = constants.R_PAREN;
       } else { // "." IDENTIFIER
         accept(constants.DOT);
         accept(constants.IDENTIFIER);
+        lastSeen = constants.IDENTIFIER;
       }
     }
+    if (lastSeen == constants.EOT)
+      return assignmentAllowed;
+    return lastSeen == constants.IDENTIFIER || lastSeen == constants.R_BRACKET;
   }
 
-  protected void checkPrimaryExpression() {
+  protected boolean checkPrimaryExpression() {
     if (currentToken.kind() == constants.IDENTIFIER ||
         isLiteral(currentToken) ||
         currentToken.kind() == constants.THIS) {
+      boolean assignmentAllowed = (currentToken.kind() == constants.IDENTIFIER);
       acceptIt();
+      return assignmentAllowed;
     } else if (currentToken.kind() == constants.L_PAREN) {
       checkParExpression();
+      return false;
     } else if (currentToken.kind() == constants.NEW) {
       acceptIt();
       if (isPrimitive(currentToken)) {
@@ -306,6 +325,7 @@ public final class SyntaxChecker {
       syntaxError("Invalid primary expression",
                   currentToken.line(), currentToken.column());
     }
+    return false;
   }
 
   protected void checkCastExpression() {

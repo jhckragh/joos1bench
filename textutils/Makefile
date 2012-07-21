@@ -1,4 +1,4 @@
-JOOS        := camljoos2
+JOOS        := joos
 JOOS_FLAGS  := -joos1
 
 JASMIN      := jasmin
